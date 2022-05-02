@@ -1,4 +1,4 @@
-
+#' @export
 
 bootstrap_lrt <- function(W,
                           fitted_model,

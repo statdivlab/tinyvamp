@@ -1,22 +1,27 @@
 Package: tinyvamp
-Title: Relative Abundance Estimation
-Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+Title: Modeling complex measurement error in microbiome experiments
+Version: 0.0.1.0
+Authors@R: as.person(c(
+    "David Clausen <dsc24@uw.edu> [aut, cre]",
+    "Amy Willis [aut]"
+  ))
+Description: tinyvamp estimates the model described in Willis & Clausen, 2022. Notably, our model allows relative abundances to lie on the boundary of the simplex. We present a stable algorithm for computing parameter estimates, asymptotically valid procedures for inference in this nonstandard problem, and examples of the utility of the method. Our approach can be used to select or compare experimental protocols, design experiments with appropriate control data, analyze mixed-specimen samples, and remove across-sample contamination.
+License: BSD 3-Clause
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Depends: 
-    R (>= 2.10),logsum, fastnnls, parallel
-Imports: data.table, Matrix,  magrittr
+    R (>= 2.10),
+    cir,
+    fastnnls, 
+    logsum, 
+    parallel
+Imports: 
+    data.table, 
+    Matrix,  
+    magrittr
 Suggests: 
+    phyloseq,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -26,7 +26,11 @@ mean_jac_lr_faster(
   X_tilde,
   Z_tilde,
   Z_tilde_gamma_cols,
-  sparse = TRUE
+  Z_tilde_list = NULL,
+  sparse = TRUE,
+  proportion_scale = FALSE,
+  P_fixed_indices = NULL,
+  P_tilde_fixed_indices = NULL
 )
 }
 \arguments{

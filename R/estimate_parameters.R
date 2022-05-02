@@ -46,6 +46,8 @@
 #' \item{pval}{The p-value}
 #' @author David Clausen
 #'
+#' @import cir
+#'
 #' @export
 estimate_parameters <- function(W,
                                 X,
@@ -89,6 +91,10 @@ estimate_parameters <- function(W,
 `Poisson` or `reweighted_Poisson`.")
   }
 
+
+  n <- nrow(W)
+  J <- ncol(W)
+
   ### add small amount to all estimated relative abundances to avoid zeroes
   P[!P_fixed_indices] <- P[!P_fixed_indices] + 0.1/J
   P_tilde[!P_tilde_fixed_indices] <-
@@ -96,9 +102,6 @@ estimate_parameters <- function(W,
 
   min_regularization <- hessian_regularization
 
-
-  n <- nrow(W)
-  J <- ncol(W)
 
   if(sum(P[!P_fixed_indices] == 0)>0){
     P[!P_fixed_indices] <- P[!P_fixed_indices] + 0.01/J
@@ -528,7 +531,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
         #     gmm_inv_wts = curr_gmm_inv_wts)
         # }
         #
-        # numgrad <- numDeriv::grad(func_eval, varying_lr_df$value)
+        # numgrad <- numDeriv %in% grad(func_eval, varying_lr_df$value) ## Amy removed double colon
         # #
         # plot(asinh(numgrad), asinh(derivs$grad),pch = 4)
         # # abline(a = 0, b = 1, lty = 2,col = "grey")

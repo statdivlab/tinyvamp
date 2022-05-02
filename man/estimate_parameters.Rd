@@ -8,7 +8,7 @@ estimate_parameters(
   W,
   X,
   Z,
-  Z_tilde,
+  Z_tilde = NULL,
   Z_tilde_gamma_cols,
   gammas,
   gammas_fixed_indices,
@@ -21,6 +21,8 @@ estimate_parameters(
   P_tilde_fixed_indices,
   gamma_tilde,
   gamma_tilde_fixed_indices,
+  alpha_tilde = NULL,
+  Z_tilde_list = NULL,
   barrier_t = 1,
   barrier_scale = 10,
   max_barrier = 1e+12,
@@ -32,9 +34,12 @@ estimate_parameters(
   criterion = "Poisson",
   subproblem_method = "Newton",
   profile_P = TRUE,
+  barrier_maxit = 500,
   profiling_maxit = 25,
   wts = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  bootstrap_failure_cutoff = NULL,
+  return_variance = FALSE
 )
 }
 \arguments{

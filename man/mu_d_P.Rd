@@ -4,21 +4,7 @@
 \alias{mu_d_P}
 \title{Calculate derivative of mu_ij with respect to an entry of P}
 \usage{
-mu_d_P(
-  i,
-  j,
-  m,
-  gammas,
-  B,
-  X,
-  Z,
-  P,
-  X_tilde,
-  Z_tilde,
-  Z_tilde_gamma_cols,
-  P_tilde,
-  gamma_tilde
-)
+mu_d_P(i, j, m, gammas, B, X, Z, P)
 }
 \arguments{
 \item{i}{The sample index (must be in 1, ..., n)}

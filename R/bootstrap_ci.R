@@ -1,5 +1,4 @@
-
-
+#' @export
 bootstrap_ci <- function(W,
                          fitted_model,
                          n_boot,
