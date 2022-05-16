@@ -30,7 +30,6 @@
 #' @param barrier_t , #starting value of reciprocal barrier penalty coef.
 #' @param barrier_scale = 10, #increments for value of barrier penalty
 #' @param max_barrier = 1e20, #maximum value of barrier_t
-#' @param final_epsilon = 0.01,
 #' @param final_f = 1e-6,
 #' @param constraint_tolerance = 1e-15,
 #' @param hessian_regularization = 0.01,

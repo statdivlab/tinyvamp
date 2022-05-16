@@ -1,5 +1,6 @@
-
-
+#' @import stats
+#' 
+#' 
 simulate_simple_data <- function(B,
                                  distrib = "Poisson",
                                  n = 5,

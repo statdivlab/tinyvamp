@@ -16,7 +16,8 @@ Depends:
     cir,
     fastnnls, 
     logsum, 
-    parallel
+    parallel,
+    stats
 Imports: 
     data.table, 
     Matrix,  
