@@ -7,16 +7,16 @@ do_one_simulation <- function(n,
                               seed,
                               label,
                               n_boot,
-                              load_tinyvamp = FALSE,
+                              # load_tinyvamp = FALSE,
                               folder_name,
                               return_dont_save = FALSE,
                               parallelize = TRUE,
                               verbose = FALSE,
                               return_variance = FALSE){
 
-  if(load_tinyvamp){
-    devtools::load_all()
-  }
+  # if(load_tinyvamp){
+  #   devtools::load_all()
+  # }
 
   print(paste("n = ",n,sep = "",collapse = ""))
   print(paste("J = ",J,sep = "",collapse = ""))

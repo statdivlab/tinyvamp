@@ -1,3 +1,6 @@
+#' @import fastnnls
+#' 
+#' 
 simpl_auglag_fnnls <- function(x,
                                fn, #function of x to optimize
                                xhess, #hessian at x

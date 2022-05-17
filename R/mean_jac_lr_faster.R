@@ -1,17 +1,4 @@
 #' @inheritParams dataframes_to_parameters
-#' @param which_k_p
-#' @param which_k_p_tilde
-#' @param which_B_rows
-#' @param which_B_keep
-#' @param which_gammas
-#' @param which_gamma_tilde
-#' @param params
-#' @param Ak_list
-#' @param A_tilde_k_list
-#' @param fixed_P_multipliers
-#' @param fixed_P_tilde_multipliers
-#' @param K
-#' @param K_tilde
 #' @param X The sample efficiency design -- an \eqn{n \times p} matrix
 #' @param Z The sample-specimen design -- an \eqn{n \times K} matrix whose \eqn{ij}-th entry
 #' indicates the proportional contribution of specimen \eqn{j} to sample \eqn{i}. Rows must
@@ -21,8 +8,6 @@
 #' @param Z_tilde_gamma_cols A numeric vector containing the columns of Z_tilde which should be
 #' multiplied by exp(gamma).
 #' @param sparse Use sparsity in Jacobian to speed up computation (default is TRUE)
-#' @return A list containing
-#' \item{pval}{The p-value}
 #' 
 #' @author David Clausen
 mean_jac_lr_faster <- function(fixed_df,
