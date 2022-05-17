@@ -8,6 +8,8 @@
 #' @param fixed_df A data frame containing values of parameters that are
 #' treated as known
 #' @param barrier_t The current value of t, the barrier penalty parameter
+#' 
+#' @import logsum
 #'
 #' @return The calculated value of the barrier penalty
 calculate_log_penalty <- function(varying_lr_df,

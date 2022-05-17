@@ -62,29 +62,46 @@ multiplied by exp(gamma).}
 \item{gammas_fixed_indices}{A logical vector of length n whose \eqn{i}-th entry is TRUE if the
 \eqn{i}-th entry of gamma should be treated as fixed and known, and FALSE otherwise}
 
-\item{barrier_t}{, #starting value of reciprocal barrier penalty coef.}
+\item{P}{A \eqn{K \times J} numeric matrix giving initial values for the relative abundance matrix.}
 
-\item{barrier_scale}{= 10, #increments for value of barrier penalty}
+\item{P_fixed_indices}{P_fixed_indices A \eqn{K \times J} logical matrix specifying any entries of P that are known. If known, the corresponding values from \code{P} will be treated as the fixed, known values.}
 
-\item{max_barrier}{= 1e20, #maximum value of barrier_t}
+\item{B}{A \eqn{p \times J} numeric matrix giving initial values for the sample efficiencies.}
 
-\item{final_f}{= 1e-6,}
+\item{B_fixed_indices}{A \eqn{p \times J} logical matrix specifying any entries of B that are known. If known, the corresponding values from \code{B} will be treated as the fixed, known values.}
 
-\item{constraint_tolerance}{= 1e-15,}
+\item{X_tilde}{A \eqn{\tilde{K} \times p} matrix giving the spurious read source efficiency design matrix}
 
-\item{hessian_regularization}{= 0.01,}
+\item{P_tilde}{A \eqn{\tilde{K} \times J} numeric matrix giving initial values for the spurious read source relative abundances.}
 
-\item{subproblem_method}{= "Newton"}
+\item{P_tilde_fixed_indices}{A \eqn{\tilde{K} \times J} logical matrix indicating if the \eqn{(i,j)}th entry of \code{P_tilde} should be treated as fixed and known.}
 
-\item{profile_P}{= TRUE Run profiling step after barrier algorithm
+\item{gamma_tilde}{A numeric vector of length \eqn{\tilde{K}} of starting values for spurious read intensity parameter gamma_tilde}
+
+\item{gamma_tilde_fixed_indices}{A logical vector of length \eqn{\tilde{K}} whose \eqn{i}-th entry is TRUE if the
+\eqn{i}-th entry of gamma_tilde should be treated as fixed and known, and FALSE otherwise}
+
+\item{barrier_t}{Starting value of reciprocal barrier penalty coef. Defaults to 1.}
+
+\item{barrier_scale}{Increments for value of barrier penalty. Defaults to 10.}
+
+\item{max_barrier}{Maximum value of barrier_t. Defaults to 1e20.}
+
+\item{final_f}{Defaults to 1e-6.}
+
+\item{constraint_tolerance}{Defaults to 1e-15,}
+
+\item{hessian_regularization}{Defaults to 0.01,}
+
+\item{subproblem_method}{Defaults to "Newton"}
+
+\item{profile_P}{Defaults to TRUE Run profiling step after barrier algorithm
 has run? If TRUE, this step is performed, possibly setting some estimated
 relative abundances in P equal to zero. If FALSE, profiling step is skipped and
 back-transformed log-ratio parameter estimated via barrier algorithm is
 returned for P.
 @param profiling_maxit Maximum number of iterations to run profiling step
 in P for (default is 25).}
-
-\item{final_epsilon}{= 0.01,}
 }
 \value{
 A list containing

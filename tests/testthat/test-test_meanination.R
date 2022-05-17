@@ -9,16 +9,16 @@ test_that("mean makes sense in sample-read-only setting", {
   Z_tilde <- Z*0
   gamma_tilde <- matrix(0,ncol = 1, nrow = 1)
   means <- meaninate(gammas = gammas,
-            B = B,
-            Z = Z,
-            X = Z,
-            P = P,
-            Z_tilde = Z_tilde,
-            X_tilde = X_tilde,
-            Z_tilde_gamma_cols = 1,
-            P_tilde = P_tilde,
-            gamma_tilde = gamma_tilde)
-
+                     B = B,
+                     Z = Z,
+                     X = Z,
+                     P = P,
+                     Z_tilde = Z_tilde,
+                     X_tilde = X_tilde,
+                     Z_tilde_gamma_cols = 1,
+                     P_tilde = P_tilde,
+                     gamma_tilde = gamma_tilde)
+  
   #make sure meaninate returns a matrix
   expect_true(is.matrix(means))
   #make sure its dimensions are correct
@@ -26,6 +26,6 @@ test_that("mean makes sense in sample-read-only setting", {
   #test that P is being used correctly here
   expect_equal(means[1,3]/means[1,1],3)
   #test that gammas are being used correctly here
-  expect_equal
-
+  # expect_equal
+  
 })

@@ -1,4 +1,5 @@
 #' @import stats
+#' @import parallel
 #' 
 #' @export
 bootstrap_ci <- function(W,

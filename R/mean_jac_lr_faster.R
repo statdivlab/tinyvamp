@@ -1,11 +1,3 @@
-
-#' Fit tinyvamp model to HTS microbiome data
-#'
-#' This function fits a model to HTS microbiome data that allows for estimation of
-#' detection efficiency effects as well as modeling of spurious read sources
-#' (e.g., contamination).
-#'
-#'
 #' @inheritParams dataframes_to_parameters
 #' @param which_k_p
 #' @param which_k_p_tilde
@@ -31,6 +23,7 @@
 #' @param sparse Use sparsity in Jacobian to speed up computation (default is TRUE)
 #' @return A list containing
 #' \item{pval}{The p-value}
+#' 
 #' @author David Clausen
 mean_jac_lr_faster <- function(fixed_df,
                                varying_lr_df,

@@ -18,23 +18,24 @@
 #' @param gammas A numeric vector of length n of starting values for read intensity parameter gamma
 #' @param gammas_fixed_indices A logical vector of length n whose \eqn{i}-th entry is TRUE if the
 #' \eqn{i}-th entry of gamma should be treated as fixed and known, and FALSE otherwise
-#' @param P
-#' @param P_fixed_indices
-#' @param B
-#' @param B_fixed_indices
-#' @param X_tilde
-#' @param P_tilde
-#' @param P_tilde_fixed_indices
-#' @param gamma_tilde
-#' @param gamma_tilde_fixed_indices
-#' @param barrier_t , #starting value of reciprocal barrier penalty coef.
-#' @param barrier_scale = 10, #increments for value of barrier penalty
-#' @param max_barrier = 1e20, #maximum value of barrier_t
-#' @param final_f = 1e-6,
-#' @param constraint_tolerance = 1e-15,
-#' @param hessian_regularization = 0.01,
-#' @param subproblem_method = "Newton"
-#' @param profile_P = TRUE Run profiling step after barrier algorithm
+#' @param P A \eqn{K \times J} numeric matrix giving initial values for the relative abundance matrix.
+#' @param P_fixed_indices P_fixed_indices A \eqn{K \times J} logical matrix specifying any entries of P that are known. If known, the corresponding values from \code{P} will be treated as the fixed, known values.
+#' @param B A \eqn{p \times J} numeric matrix giving initial values for the sample efficiencies.
+#' @param B_fixed_indices A \eqn{p \times J} logical matrix specifying any entries of B that are known. If known, the corresponding values from \code{B} will be treated as the fixed, known values.
+#' @param X_tilde A \eqn{\tilde{K} \times p} matrix giving the spurious read source efficiency design matrix
+#' @param P_tilde A \eqn{\tilde{K} \times J} numeric matrix giving initial values for the spurious read source relative abundances.
+#' @param P_tilde_fixed_indices A \eqn{\tilde{K} \times J} logical matrix indicating if the \eqn{(i,j)}th entry of \code{P_tilde} should be treated as fixed and known.
+#' @param gamma_tilde A numeric vector of length \eqn{\tilde{K}} of starting values for spurious read intensity parameter gamma_tilde
+#' @param gamma_tilde_fixed_indices A logical vector of length \eqn{\tilde{K}} whose \eqn{i}-th entry is TRUE if the
+#' \eqn{i}-th entry of gamma_tilde should be treated as fixed and known, and FALSE otherwise
+#' @param barrier_t Starting value of reciprocal barrier penalty coef. Defaults to 1.
+#' @param barrier_scale Increments for value of barrier penalty. Defaults to 10.
+#' @param max_barrier Maximum value of barrier_t. Defaults to 1e20.
+#' @param final_f Defaults to 1e-6.
+#' @param constraint_tolerance Defaults to 1e-15,
+#' @param hessian_regularization Defaults to 0.01,
+#' @param subproblem_method Defaults to "Newton"
+#' @param profile_P Defaults to TRUE Run profiling step after barrier algorithm
 #' has run? If TRUE, this step is performed, possibly setting some estimated
 #' relative abundances in P equal to zero. If FALSE, profiling step is skipped and
 #'  back-transformed log-ratio parameter estimated via barrier algorithm is
@@ -43,6 +44,7 @@
 #'  in P for (default is 25).
 #' @return A list containing
 #' \item{pval}{The p-value}
+#' 
 #' @author David Clausen
 #'
 #' @import cir
