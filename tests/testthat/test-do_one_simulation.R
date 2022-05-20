@@ -8,7 +8,7 @@ test_that("do_one_simulation returns list of lists", {
                                 label = "test",
                                 n_boot = 5,
                                 verbose =FALSE,
-                                load_tinyvamp = FALSE,
+                                # load_tinyvamp = FALSE,
                                 folder_name = "test",
                                 return_dont_save = TRUE)
 
@@ -57,7 +57,7 @@ gradient off-by-one-type error now succeeds.",{
                     label = "test",
                     n_boot = 5,
                     parallelize= FALSE,
-                    load_tinyvamp = FALSE,
+                    # load_tinyvamp = FALSE,
                     folder_name = "test",
                     verbose = FALSE,
                     return_dont_save = TRUE)
@@ -123,7 +123,7 @@ test_that("Another simulation stalled on Bayes can run and
                       label = "trying_for_hundo",
                       n_boot = 10,
                       parallelize= FALSE,
-                      load_tinyvamp = FALSE,
+                      # load_tinyvamp = FALSE,
                       folder_name = "test",
                       verbose = TRUE,
                       return_dont_save = TRUE)
