@@ -1,13 +1,4 @@
 #' @inheritParams dataframes_to_parameters
-#' @param X The sample efficiency design -- an \eqn{n \times p} matrix
-#' @param Z The sample-specimen design -- an \eqn{n \times K} matrix whose \eqn{ij}-th entry
-#' indicates the proportional contribution of specimen \eqn{j} to sample \eqn{i}. Rows must
-#' sum to 1 or be identically 0.
-#' @param Z_tilde The spurious read design -- an \eqn{n x \tilde{K}} matrix where
-#' \eqn{\tilde{K}} is the number of spurious read sources modeled.
-#' @param Z_tilde_gamma_cols A numeric vector containing the columns of Z_tilde which should be
-#' multiplied by exp(gamma).
-#' @param sparse Use sparsity in Jacobian to speed up computation (default is TRUE)
 #' 
 #' @author David Clausen
 mean_jac_lr_faster <- function(fixed_df,
@@ -32,7 +23,7 @@ mean_jac_lr_faster <- function(fixed_df,
                                Z_tilde,
                                Z_tilde_gamma_cols,
                                Z_tilde_list = NULL,
-                               sparse = TRUE,
+                               sparse = TRUE, # Use sparsity in Jacobian to speed up computation (default is TRUE)
                                proportion_scale = FALSE,
                                P_fixed_indices = NULL,
                                P_tilde_fixed_indices = NULL){

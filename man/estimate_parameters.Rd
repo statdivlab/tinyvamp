@@ -85,27 +85,32 @@ multiplied by exp(gamma).}
 
 \item{barrier_scale}{Increments for value of barrier penalty. Defaults to 10.}
 
-\item{max_barrier}{Maximum value of barrier_t. Defaults to 1e20.}
+\item{max_barrier}{Maximum value of barrier_t. Defaults to 1e12.}
 
 \item{final_f}{Defaults to 1e-6.}
 
-\item{constraint_tolerance}{Defaults to 1e-15,}
+\item{constraint_tolerance}{The tolerance for the augmented Lagrangian algorithm. Final estimates of P are relative abundances to within \code{constraint_tolerance} of 1, i.e., abs(sum p_{kj} - 1) <  \code{constraint_tolerance}. Defaults to 1e-10.}
 
-\item{hessian_regularization}{Defaults to 0.01,}
+\item{hessian_regularization}{The second step of optimization involves a quadratic approximation to the likelihood, for which we use a modified Taylor series for stability. This is the constant that dampens the second term. Defaults to 0.01.}
+
+\item{criterion}{Should the algorithm return the Poisson maximum likelihood estimates or the reweighted Poisson maximum likelihood estimates? Options are "Poisson" or "reweighted_Poisson".}
 
 \item{subproblem_method}{Defaults to "Newton"}
 
-\item{profile_P}{Defaults to TRUE Run profiling step after barrier algorithm
-has run? If TRUE, this step is performed, possibly setting some estimated
-relative abundances in P equal to zero. If FALSE, profiling step is skipped and
-back-transformed log-ratio parameter estimated via barrier algorithm is
-returned for P.
-@param profiling_maxit Maximum number of iterations to run profiling step
-in P for (default is 25).}
+\item{profile_P}{Defaults to TRUE Run profiling step after barrier algorithm has run? If TRUE, this step is performed, possibly setting some estimated relative abundances in P equal to zero. If FALSE, profiling step is skipped and back-transformed log-ratio parameter estimated via barrier algorithm is returned for P.}
+
+\item{profiling_maxit}{Maximum number of iterations to run profiling step in P for (default is 25).}
+
+\item{wts}{Weights for reweighting the likelihood contributions. This is usually done to improve efficiency. Defaults to NULL. We compute the weights for you even if you choose \code{criterion = "reweighted_Poisson"}.}
+
+\item{verbose}{Do you want to know what I'm doing? Defaults to FALSE.}
+
+\item{bootstrap_failure_cutoff}{Defaults to NULL.}
+
+\item{return_variance}{Defaults to FALSE.}
 }
 \value{
 A list containing
-\item{pval}{The p-value}
 }
 \description{
 This function fits a model to HTS microbiome data that allows for estimation of
