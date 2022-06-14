@@ -57,7 +57,6 @@ if(boot_method == "subsample"){
                         max_barrier = 1e10, #maximum value of barrier_t
                         initial_conv_tol = 1000,
                         final_conv_tol = 0.1,
-                        final_f = 1e-6,
                         constraint_tolerance = 1e-10,
                         hessian_regularization = .01,
                         criterion = fitted_model$criterion,

@@ -1,13 +1,14 @@
-test_that("multiplication works", {
-  W <- simulate_paper_data(n =3,
+test_that("bootstrap_ci works", {
+  W <- tinyvamp:::simulate_paper_data(n =3,
                            J = 5,
                            B_multiplier = 1,
                            distrib = "NB",
                            seed = 0)
 
 
-  fitted_model <- fit_simulation_model(W,"reweighted_Poisson")
+  fitted_model <- tinyvamp:::fit_simulation_model(W,"reweighted_Poisson")
 
+  library(parallel)
   cis <- bootstrap_ci(W = W,
                       fitted_model = fitted_model,
                       n_boot = 10,

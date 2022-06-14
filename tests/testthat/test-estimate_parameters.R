@@ -41,11 +41,9 @@ test_that("When MLE has closed form, estimate_parameters finds it", {
                       max_barrier = 1e12, #maximum value of barrier_t
                       initial_conv_tol = 1000,
                       final_conv_tol = 0.1,
-                      final_f = 1e-6,
                       constraint_tolerance = 1e-15,
                       hessian_regularization = 0.01,
                       criterion = "Poisson",
-                      subproblem_method = "Newton",
                       profile_P = FALSE,
                       profiling_maxit = 25
   )
@@ -100,11 +98,11 @@ test_that("When MLE has closed form,reweighted estimator is close", {
                                           max_barrier = 1e12, #maximum value of barrier_t
                                           initial_conv_tol = 1000,
                                           final_conv_tol = 0.1,
-                                          final_f = 1e-6,
+                                          
                                           constraint_tolerance = 1e-15,
                                           hessian_regularization = 0.01,
                                           criterion = "reweighted_Poisson",
-                                          subproblem_method = "Newton",
+                                          
                                           profile_P = FALSE,
                                           profiling_maxit = 25,
                                           return_variance = TRUE
@@ -166,10 +164,9 @@ test_that("When MLE has closed form, estimate_parameters finds it and profiling 
                                           max_barrier = 1e12, #maximum value of barrier_t
                                           initial_conv_tol = 1000,
                                           final_conv_tol = 0.1,
-                                          final_f = 1e-6,
                                           constraint_tolerance = 1e-15,
                                           hessian_regularization = 0.01,
-                                          subproblem_method = "Newton",
+                                          
                                           profile_P = TRUE,
                                           profiling_maxit = 25
   )
@@ -226,10 +223,9 @@ test_that("When MLE has closed form at boundary, estimate_parameters finds it an
                                           max_barrier = 1e12, #maximum value of barrier_t
                                           initial_conv_tol = 1000,
                                           final_conv_tol = 0.1,
-                                          final_f = 1e-6,
                                           constraint_tolerance = 1e-10,
                                           hessian_regularization = 0.01,
-                                          subproblem_method = "Newton",
+                                          
                                           profile_P = TRUE,
                                           profiling_maxit = 25
   )
@@ -286,10 +282,9 @@ test_that("Setting all weights equal to 1 does not affect ability to
                                           max_barrier = 1e12, #maximum value of barrier_t
                                           initial_conv_tol = 1000,
                                           final_conv_tol = 0.1,
-                                          final_f = 1e-6,
                                           constraint_tolerance = 1e-15,
                                           hessian_regularization = 0.01,
-                                          subproblem_method = "Newton",
+                                          
                                           profile_P = FALSE,
                                           profiling_maxit = 25,
                                           wts = rep(1,10)
@@ -345,11 +340,11 @@ test_that("Setting all weights equal to 1 does not affect ability to
 #                                         max_barrier = 1e12, #maximum value of barrier_t
 #                                         initial_conv_tol = 1000,
 #                                         final_conv_tol = 0.1,
-#                                         final_f = 1e-6,
+#                                         
 #                                         constraint_tolerance = 1e-15,
 #                                         hessian_regularization = 0.01,
 #                                         criterion = "GMM",
-#                                         subproblem_method = "Newton",
+#                                         
 #                                         profile_P = FALSE,
 #                                         profiling_maxit = 25
 # )
@@ -408,11 +403,11 @@ test_that("Setting all weights equal to 1 does not affect ability to
 #                                           max_barrier = 1e12, #maximum value of barrier_t
 #                                           initial_conv_tol = 1000,
 #                                           final_conv_tol = 0.1,
-#                                           final_f = 1e-6,
+#                                           
 #                                           constraint_tolerance = 1e-15,
 #                                           hessian_regularization = 0.01,
 #                                           criterion = "GMM",
-#                                           subproblem_method = "Newton",
+#                                           
 #                                           profile_P = FALSE,
 #                                           profiling_maxit = 25
 #   )
@@ -469,10 +464,10 @@ test_that("Setting all weights equal to 1 does not affect ability to
 #                                           max_barrier = 1e12, #maximum value of barrier_t
 #                                           initial_conv_tol = 1000,
 #                                           final_conv_tol = 0.1,
-#                                           final_f = 1e-6,
+#                                           
 #                                           constraint_tolerance = 1e-15,
 #                                           hessian_regularization = 0.01,
-#                                           subproblem_method = "Newton",
+#                                           
 #                                           profile_P = TRUE,
 #                                           profiling_maxit = 25,
 #                                           criterion = "GMM"
@@ -560,11 +555,10 @@ test_that("Contamination setting with alpha_tilde works", {
                         max_barrier = 1e12, #maximum value of barrier_t
                         initial_conv_tol = 1000,
                         final_conv_tol = 0.1,
-                        final_f = 1e-6,
                         constraint_tolerance = 1e-15,
                         hessian_regularization = 0.01,
                         criterion = "Poisson",
-                        subproblem_method = "Newton",
+                        
                         profile_P = FALSE,
                         profiling_maxit = 25
   )
@@ -655,11 +649,11 @@ test_that("Contamination setting with alpha_tilde works when alpha_tilde is not 
                         max_barrier = 1e12, #maximum value of barrier_t
                         initial_conv_tol = 1000,
                         final_conv_tol = 0.1,
-                        final_f = 1e-6,
+                        
                         constraint_tolerance = 1e-15,
                         hessian_regularization = 0.01,
                         criterion = "Poisson",
-                        subproblem_method = "Newton",
+                        
                         profile_P = FALSE,
                         profiling_maxit = 25
     )

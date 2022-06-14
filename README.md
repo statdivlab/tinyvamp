@@ -1,2 +1,56 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # tinyvamp
-Package for estimation and removal of measurement error in high-throughput sequencing data
+
+<!-- badges: start -->
+<!-- [![R-CMD-check](https://github.com/statdivlab/tinyvamp/workflows/R-CMD-check/badge.svg)](https://github.com/statdivlab/tinyvamp/actions) -->
+
+[![Coverage
+status](https://codecov.io/gh/statdivlab/tinyvamp/branch/main/graph/badge.svg)](https://codecov.io/github/statdivlab/tinyvamp?branch=main)
+<!-- badges: end -->
+
+`tinyvamp` is a package for estimation and removal of measurement error
+in high-throughput sequencing data.
+
+Full details on the model and estimation method are available in the
+[preprint](https://arxiv.org/abs/2204.12733).
+
+**Documentation and vignettes are under construction - please check back
+soon!**
+
+**Needs something more urgently? File an
+[issue](https://github.com/statdivlab/tinyvamp/issues) or [send Amy an
+email](http://statisticaldiversitylab.com/team/amy-willis)!**
+
+## Installation
+
+You can install the development version of tinyvamp from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("statdivlab/tinyvamp")
+```
+
+<!-- ## Example -->
+<!-- This is a basic example which shows you how to solve a common problem: -->
+<!-- ```{r example} -->
+<!-- library(tinyvamp) -->
+<!-- ## basic example code -->
+<!-- ``` -->
+
+## Humans
+
+Authors: [David
+Clausen](https://www.biostat.washington.edu/people/david-clausen) and
+[Amy Willis](http://statisticaldiversitylab.com)
+
+Do you have a request for us? Let us know! We want folks to use
+`tinyvamp` and will try to make it as easy as possible.
+
+Do you have a question? Check out the above documentation list, then
+shoot us an email or open a
+[Discussion](https://github.com/adw96/breakaway/discussions). We receive
+a lot of emails from users, so we try to answer questions on the Wiki
+rather than responding to everyone individually.

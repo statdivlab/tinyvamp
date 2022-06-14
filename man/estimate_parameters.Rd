@@ -28,11 +28,9 @@ estimate_parameters(
   max_barrier = 1e+12,
   initial_conv_tol = 1000,
   final_conv_tol = 0.1,
-  final_f = 1e-06,
   constraint_tolerance = 1e-10,
   hessian_regularization = 0.01,
   criterion = "Poisson",
-  subproblem_method = "Newton",
   profile_P = TRUE,
   barrier_maxit = 500,
   profiling_maxit = 25,
@@ -87,15 +85,11 @@ multiplied by exp(gamma).}
 
 \item{max_barrier}{Maximum value of barrier_t. Defaults to 1e12.}
 
-\item{final_f}{Defaults to 1e-6.}
-
 \item{constraint_tolerance}{The tolerance for the augmented Lagrangian algorithm. Final estimates of P are relative abundances to within \code{constraint_tolerance} of 1, i.e., abs(sum p_{kj} - 1) <  \code{constraint_tolerance}. Defaults to 1e-10.}
 
 \item{hessian_regularization}{The second step of optimization involves a quadratic approximation to the likelihood, for which we use a modified Taylor series for stability. This is the constant that dampens the second term. Defaults to 0.01.}
 
 \item{criterion}{Should the algorithm return the Poisson maximum likelihood estimates or the reweighted Poisson maximum likelihood estimates? Options are "Poisson" or "reweighted_Poisson".}
-
-\item{subproblem_method}{Defaults to "Newton"}
 
 \item{profile_P}{Defaults to TRUE Run profiling step after barrier algorithm has run? If TRUE, this step is performed, possibly setting some estimated relative abundances in P equal to zero. If FALSE, profiling step is skipped and back-transformed log-ratio parameter estimated via barrier algorithm is returned for P.}
 
@@ -110,7 +104,7 @@ multiplied by exp(gamma).}
 \item{return_variance}{Defaults to FALSE.}
 }
 \value{
-A list containing
+A list containing TODO
 }
 \description{
 This function fits a model to HTS microbiome data that allows for estimation of
