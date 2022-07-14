@@ -176,7 +176,7 @@ Under this parametrization and constraints, we interpret
 Now let's move on to set up the sample design matrix, which links samples to specimens. $\mathbf{Z}$ is a $n \times K$ matrix, where $n$ is the number of samples and $K$ is the number of specimens. Here, there is only one specimen -- the synthetic community that was spiked-in to every sample. So here's our $\mathbf{Z}$:
 
 ```{r}
-Z <- matrix(1,nrow = 30, ncol = 1)
+Z <- matrix(1, nrow = 30, ncol = 1)
 ```
 
 We now need to initialize our relative abundance matrix $\mathbf{p}$, a $K \times J$. Let's initialize it at the sample relative abundance from the flow cytometry data, and tell the algorithm that we don't know any of the entries of $\mathbf{p}$. 
