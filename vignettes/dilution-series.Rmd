@@ -18,11 +18,7 @@ knitr::opts_chunk$set(
 
 # Scope and purpose
 
-In this vignette, we will walk through how to use `tinyvamp` to estimate and compare detection efficiencies across batches or experiments. We will consider the Phase 2 data of Costea et al. (2017), who spiked-in a synthetic community to 10 samples, which were then sequenced using three shotgun metagenomic sequencing experimental protocols (protocols H, Q and W). Taxon abundances were also estimated using flow cytometry. 
-
-Our analysis here will estimate the detection efficiencies of the three shotgun protocols compared to flow cytometry. We will also test the null hypothesis that detection efficiencies of the three shotgun protocols are the same. 
-
-Because of its flexibility, fitting a model using `tinyvamp` involves specifying a lot of parameters. The focus of this vignette will therefore be on *how* we set up the model to estimate detection efficiencies, rather than *why* we set up the model in this way. Please see the tinyvamp paper and references therein for those details!
+In this vignette, we will walk through how to use `tinyvamp` to estimate detection efficiencies and contamination using dilution series. 
 
 # Comparing detection efficiencies across experiments
 
@@ -91,92 +87,110 @@ W <- W[order(rownames(W)),]
 
 # Model setup 
 
-In this vignette, we're doing to fit a model to all the data we have. In contrast, if you want to evaluate the performance of `tinyvamp`'s fit, you might want to split your sample and do cross-validation, like we did in the paper. You can check out code for that [here](https://github.com/statdivlab/tinyvamp_supplementary/blob/main/karstens_cv.R), but note that it is more complicated! 
+In this vignette, we're doing to fit a model to all the data we have, and compare the estimated composition of the community to the known composition of the community. In contrast, if you want to evaluate the performance of `tinyvamp`'s fit, you might want to split your sample and do cross-validation, like we did in the paper. You can check out code for that [here](https://github.com/statdivlab/tinyvamp_supplementary/blob/main/karstens_cv.R), but note that it is more complicated! 
 
 In this analysis, we are going to tell `tinyvamp` that
 
 - the same specimen is analyzed in all nine samples (this is $\mathbf{Z}$)
-- there are eight taxa that are present in 12.5% abundance each, and that every other taxon is not present in the true composition of the sample (this is $\mathbf{p}$)
 - we are not interested in estimating detection efficiencies for contaminants (this is $\tilde{\mathbf{X}}$)
+- there are eight taxa that are present in 12.5% abundance each, and that every other taxon is not present in the true composition of the sample (this is $\mathbf{p}$)
 
 and we are going to ask `tinyvamp` to estimate
 
-- the contamination profile ($\tilde{\mathbf{p}}$)
-- the detection efficiencies for mock taxa (this is $\mathbf{X}$ and $\mathbf{\beta}$)
+- the true relative abundance of the sample ($\mathbf{p}$)
+- the contamination relative abundance profile ($\tilde{\mathbf{p}}$)
+- the detection efficiencies for mock taxa ($\mathbf{\beta}$)
 
 We're going to assume that
 
 - every sample has the same contamination profile  (this is $\tilde{\mathbf{Z}}$)
-
+- the ratio of expected contaminant reads to expected mock reads is proportional to the dilution number of the sample. (you can see support for this in Figure 2, upper right, of [the paper](https://arxiv.org/pdf/2204.12733.pdf)) Mo' dilution = less biomass = mo' problems! 
 
 Ok, let's dive in! 
 
-The same specimen is analyzed in all nine samples: 
+The same specimen is analyzed in all nine samples. The rows of $\mathbf{Z}$ represent the samples (of which there are nine), and the columns represent the distinct specimens (of which there is one). 
 
 ```{r}
-Z <- matrix(1,ncol = 1, nrow = 9)
+Z <- matrix(1, ncol = 1, nrow = 9)
 # colnames(Z) <- NULL
 ```
 
-There are eight taxa that are present in 12.5% abundance each, and everything else is absent... 
+If you had a study where you had, let's say, two distinct specimens of different compositions to analyze, and 3 samples for each, your $\mathbf{Z}$ might look like $\begin{pmatrix} 1 & 0 \\ 1 & 0 \\ 1 & 0 \\ 0 & 1 \\ 0 & 1 \\ 0 & 1 \end{pmatrix}$. 
 
-```{r}
-P <- matrix(c(rep(0,240), rep(1/8,8)),nrow = 1, ncol = ncol(W))
-```
-
-... and `tinyvamp` doesn't need to estimate the composition, because it's known:
-
-HANG ON THIS IS WRONG, IT IS ESTIMATING THE COMPOSITION
-
-```{r}
-P_fixed_indices <- matrix(TRUE,ncol = ncol(W),nrow = 1)
-```
-
-We are not interested in estimating detection efficiencies (see the Costea et al vignette if you want to learn to do that!)
+We are not interested in estimating detection efficiencies (see the Costea et al vignette if you want to learn to do that!): 
 
 ```{r}
 X <- matrix(0, nrow = nrow(W), ncol = 1)
-X_tilde <- matrix(0, nrow = K_tilde, ncol = nrow(B))
+X_tilde <- matrix(0, nrow = 1, ncol = 1) # TODO(AW)
 ```
 
+The true composition of the specimen is that there are eight taxa that are present in 12.5% abundance each, and we ordered them last. Everything else has 0\% abundance. 
+
 ```{r}
-B <- matrix(0, ncol = ncol(W), nrow = 1)
-B_fixed_indices <- matrix(TRUE, ncol = ncol(B), nrow = nrow(B))
+P <- matrix(c(rep(0,240), rep(1/8,8)), nrow = 1, ncol = ncol(W))
+```
+
+and we know this to be true ($\mathbf{p}$ is fixed): 
+
+```{r}
+P_fixed_indices <- matrix(TRUE, nrow = 1, ncol = ncol(W))
+```
+
+Note that `P_fixed_indices`, `B_fixed_indices`, etc., are how we tell `tinyvamp` if we *do* versus *do not* know the value of these parameters. So by specifying `P` and `P_fixed_indices` as above, we say "keep $\mathbf{p}$ fixed at the values that we tell you; you don't need to estimate it yourself!" 
+
+In contrast, we do need to estimate *some* of the $\beta$'s, a.k.a. the detection efficiencies. We want to estimate the detection efficiencies of the mock taxa, but not for the contaminants. 
+
+```{r}
+B_fixed_indices <- matrix(TRUE, ncol = ncol(W), nrow = ncol(X))
 B_fixed_indices[1, 241:247] <- FALSE
 ```
 
-We *do* need to estimate the sampling intensity parameters (this will usually be the case):
+Hang on, why is $\beta_{248}$ fixed? Well, we always need some taxon to compare detection efficiencies to -- otherwise there's no difference between efficiencies 1, 2, and 4 versus 8, 16 and 32! (The fancy term for this is "identifiability constraint".) So here we're deciding to set *Limosilactobacillus fermentum* as the "baseline" taxon, which corresponds to the taxon in the last column of $\mathbf{W}$,
+
+Remember that the $\beta$'s give the detection efficiencies on the log-scale, so let's set: 
 
 ```{r}
-gammas_fixed_indices <- rep(FALSE, length(gammas))
-gammas <- log(apply(W, 1, sum)) + rnorm(length(nrow(W)))
+B <- matrix(0, ncol = ncol(W), nrow = 1)
 ```
 
-Now let's talk contamination! 
+Note that this analysis treats the contaminant taxa as having the same detection efficiency as *Limosilactobacillus fermentum*.
+
+**If a parameter is** *not fixed* (e.g., $\beta_{241}$ in the above), **the corresponding value is where is** *initialized* **for the estimation algorithm to proceed.**
+
+Ok, phew, that's most of the hard stuff! 
+
+We *do* need to estimate the sampling intensity parameters (this will usually be the case). Let's initialize them at the log-total-read count (plus a bit of noise). 
 
 ```{r}
-### Z_tilde
-# set up dilutions as covariate
-Z_tilde <- matrix(3^(0:8)/exp(mean(log(3^(0:8)))),ncol = 1)
-
-Z_tilde_gamma_cols <- 1
-Z_tilde_list <- NULL
-alpha_tilde <- NULL
+gammas_fixed_indices <- rep(FALSE, nrow(W))
+gammas <- log(apply(W, 1, sum)) + rnorm(nrow(W))
 ```
+
+Now let's talk contamination! We want to assume that the ratio of expected contaminant reads to expected mock reads is proportional to $3^{d}$, where $d$ is the dilution number of the sample ($d_i=0$ corresponds to the undiluted sample). To do this, we set $\tilde{\mathbf{Z}}_i$ proportional to $\exp(\gamma_i) \times 3^{d_i}$ for sample $i$. To address the $3^{d_i}$ piece, we set
+
+```{r}
+Z_tilde <- matrix(3^(0:8)/exp(mean(log(3^(0:8)))), ncol = 1)
+```
+
+and to address the $\exp(\gamma_i)$ piece, we set
+
+```{r}
+Z_tilde_gamma_cols <- 1 
+```
+
+<!-- TODO(AW) ask DC why both. Not doubling up on biomass info? I guess the gammas are estimated simultaneously across both pieces  -->
+
+AW up to here
 
 ```{r}
 ### gamma_tilde
-K_tilde <- max(Z_tilde_gamma_cols)
-gamma_tilde <- matrix(0, nrow = K_tilde,ncol = 1)
-
-
-gamma_tilde_fixed_indices <- matrix(FALSE, ncol = ncol(gamma_tilde),
-                                    nrow = nrow(gamma_tilde))
+gamma_tilde <- matrix(0, nrow = 1, ncol = 1)
+gamma_tilde_fixed_indices <- matrix(FALSE, ncol = ncol(gamma_tilde), nrow = nrow(gamma_tilde))
 ```
 
 ```{r}
 ### P_tilde
-P_tilde <- matrix(1/ncol(W),ncol = ncol(W), nrow = K_tilde)
+P_tilde <- matrix(1/ncol(W),ncol = ncol(W), nrow = 1)
 P_tilde_fixed_indices <- matrix(FALSE,
                                 ncol = ncol(P_tilde),
                                 nrow = nrow(P_tilde))
@@ -186,28 +200,13 @@ P_tilde[,ncol(P_tilde_fixed_indices)] <- 0
 
 P_tilde_fixed_indices[,ncol(P_tilde_fixed_indices)] <- TRUE
 
-for(k_tilde in 1:nrow(P_tilde)){
-  P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]] <-
-    rexp(sum(!P_tilde_fixed_indices[k_tilde,]))
-  P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]] <-
-    P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]]/sum(
-      P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]]
-    )
-}
+P_tilde[1,!P_tilde_fixed_indices[1,]] <-  rexp(sum(!P_tilde_fixed_indices[1,]))
+P_tilde[1,!P_tilde_fixed_indices[1,]] <- P_tilde[1,!P_tilde_fixed_indices[1,]]/sum(
+    P_tilde[1,!P_tilde_fixed_indices[1,]]
+  )
 ```
 
-
-
-
-
-```{r}
-Z <- matrix(1,ncol = 1, nrow = 9)
-colnames(Z) <- NULL
-Z <- matrix(1,ncol = 1, nrow = 9)
-colnames(Z) <- NULL
-```
-
-
+Now let's fit the model! 
 
 ```{r}
 full_karstens_model <- estimate_parameters(W = W,
@@ -229,12 +228,21 @@ full_karstens_model <- estimate_parameters(W = W,
                                            criterion = "reweighted_Poisson")
 ```
 
+```{r}
+full_karstens_model %>% names
+```
 
-(This looks like an error but actually it's not -- you should still be able to access `full_karstens_model`)
+Wooohooo! 
 
 ```{r}
 full_karstens_model$varying %>% as_tibble
 ```
+
+
+```{r}
+full_karstens_model$varying %>% pull(param) %>% unique
+```
+
 
 ```{r}
 # full_cis <- bootstrap_ci(W,
@@ -249,10 +257,6 @@ full_karstens_model$varying %>% as_tibble
 #   filter(param == "B")
 ```
 
-```{r}
-P <- matrix(1/ncol(W),nrow = 1, ncol = ncol(W))
-P_fixed_indices <- matrix(FALSE,ncol = ncol(W),nrow = 1)
-```
 
 <!-- # Using cross-fold validation -->
 
