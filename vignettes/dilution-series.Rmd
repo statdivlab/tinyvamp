@@ -126,6 +126,8 @@ P <- matrix(c(rep(0,240), rep(1/8,8)),nrow = 1, ncol = ncol(W))
 
 ... and `tinyvamp` doesn't need to estimate the composition, because it's known:
 
+HANG ON THIS IS WRONG, IT IS ESTIMATING THE COMPOSITION
+
 ```{r}
 P_fixed_indices <- matrix(TRUE,ncol = ncol(W),nrow = 1)
 ```
@@ -228,7 +230,11 @@ full_karstens_model <- estimate_parameters(W = W,
 ```
 
 
-Argh this is erroring and I don't know why!
+(This looks like an error but actually it's not -- you should still be able to access `full_karstens_model`)
+
+```{r}
+full_karstens_model$varying %>% as_tibble
+```
 
 ```{r}
 # full_cis <- bootstrap_ci(W,
