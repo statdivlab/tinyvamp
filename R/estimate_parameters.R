@@ -246,13 +246,17 @@ alpha_tilde and matrices in Z_tilde_list.)")
     W_long <- do.call(c,W_long)
     means_long <- lapply(1:n, function(i) as.numeric(poisson_means[i,]))
     means_long <- do.call(c,means_long)
-
+    
     squerror_long <- (W_long - means_long)^2
-
-    pre_wts <- try(cir::cirPAVA(y = squerror_long, x = means_long,
-                                wt= wts))
-
-    if(inherits(pre_wts,"try-error")){
+    
+    pre_wts <- tryCatch(cir::cirPAVA(y = squerror_long, x = means_long, wt= wts), 
+                        error = function(c) { 
+                          if (verbose) 
+                            message("Fitted means are the same, breaking cirPAVA...\nNot to worry! Jitter and refit...\n")
+                        }
+    )
+    
+    if(is.null(pre_wts)) { # i.e., did the above error
       # add tiny amount of jitter to means_long so that all values are unique;
       # suspected bug in cir package otherwise causes errors at least
       # some of the time
