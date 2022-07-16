@@ -1,6 +1,7 @@
 ---
 title: "Using dilution series to remove contamination"
 output: rmarkdown::html_vignette
+author: Amy Willis
 vignette: >
   %\VignetteIndexEntry{Using dilution series to remove contamination}
   %\VignetteEncoding{UTF-8}
@@ -30,13 +31,6 @@ We will start by loading the relevant packages. You might need to install `logsu
 library(tidyverse)
 library(tinyvamp)
 library(speedyseq)
-# library(devtools)
-# library(data.table)
-# library(magrittr)()
-# library(ggplot2)
-# library(dplyr)
-# library(Matrix)
-# library(gridExtra)
 ```
 
 Now let's load the relevant data and inspect it. This data is from [Karstens et al. (2019)](https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org), who generated 9 samples via three-fold dilutions of a synthetic community containing 8 distinct strains of bacteria which each account for 12.5% of the DNA in the community. Despite only 8 strains being present in the synthetic community, 248 total strains were identified using DADA2 (see Section 12.1 of [our paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data processing). 
@@ -52,7 +46,7 @@ We can see the DNA concentrations and what-fold dilution each sample is as follo
 karstens_phyloseq %>% sample_data
 ```
 
-Pull out column indices corresponding to taxa in the mock *TODO*
+We know which genera correspond to taxa in the mock, so let's create a vector telling us which rows of the ASV table contain data on the mock taxa 
 
 ```{r}
 genera_data <- karstens_phyloseq %>% tax_table %>% as_tibble %>% select("Genus") %>% pull
@@ -74,22 +68,23 @@ mock_taxa <- c(Pseudomonas,
                Limosilactobacillus)
 ```
 
-We noted that there were some complexities regarding Salmonella, with two strains being detected: one strain as a likely mutant of synthetic community member *S. enterica*. For this reason we just consider the more prevalent Salmonella strain (hence the `Salmonella[1]` in the above). 
+Note that there were some complexities regarding Salmonella, with two strains being detected: one strain as a likely mutant of synthetic community member *S. enterica*. For this reason we just consider the more prevalent Salmonella strain (hence the `Salmonella[1]` in the above). 
 
-Construct count data matrix $W$. We reorder columns so taxa in mock come last, and reorder rows so dilutions in increasing order -- this just makes our lives easier later! *TODO*
+Now we can construct the count data matrix $\mathbf{W}$. We will reorder its columns so the taxa in the mock come last, and reorder rows so dilutions are in increasing order -- this just makes our lives easier later!
  
 ```{r}
 W <- karstens_phyloseq %>% otu_table %>% as.matrix
-W <- cbind(W[,!(1:ncol(W) %in% mock_taxa)],
-           W[,mock_taxa])
-W <- W[order(rownames(W)),]
+jj <- ncol(W)
+W <- cbind(W[ , !(1:jj %in% mock_taxa)],
+           W[ , mock_taxa])
+W <- W[order(rownames(W)), ]
 ```
 
-# Model setup 
+# Model assumptions and data
 
-In this vignette, we're doing to fit a model to all the data we have, and compare the estimated composition of the community to the known composition of the community. In contrast, if you want to evaluate the performance of `tinyvamp`'s fit, you might want to split your sample and do cross-validation, like we did in the paper. You can check out code for that [here](https://github.com/statdivlab/tinyvamp_supplementary/blob/main/karstens_cv.R), but note that it is more complicated! 
+In this vignette, we're going to fit a model to all the data we have, and inspect the estimated detection efficiencies and composition of the contaminant profile. In contrast, if you want to evaluate the performance of `tinyvamp`'s fit, you might want to split your sample and do cross-validation, like we did in the paper. You can check out code for that [here](https://github.com/statdivlab/tinyvamp_supplementary/blob/main/karstens_cv.R), but note that it is more complicated! 
 
-In this analysis, we are going to tell `tinyvamp` that
+To do this analysis, we are going to tell `tinyvamp` that
 
 - the same specimen is analyzed in all nine samples (this is $\mathbf{Z}$)
 - we are not interested in estimating detection efficiencies for contaminants (this is $\tilde{\mathbf{X}}$)
@@ -97,43 +92,36 @@ In this analysis, we are going to tell `tinyvamp` that
 
 and we are going to ask `tinyvamp` to estimate
 
-- the true relative abundance of the sample ($\mathbf{p}$)
 - the contamination relative abundance profile ($\tilde{\mathbf{p}}$)
 - the detection efficiencies for mock taxa ($\mathbf{\beta}$)
 
 We're going to assume that
 
 - every sample has the same contamination profile  (this is $\tilde{\mathbf{Z}}$)
-- the ratio of expected contaminant reads to expected mock reads is proportional to the dilution number of the sample. (you can see support for this in Figure 2, upper right, of [the paper](https://arxiv.org/pdf/2204.12733.pdf)) Mo' dilution = less biomass = mo' problems! 
+- the ratio of expected contaminant reads to expected mock reads is proportional to the dilution number of the sample (you can see support for this in Figure 2, upper right, of [the paper](https://arxiv.org/pdf/2204.12733.pdf)). Mo' dilution = less biomass = mo' problems! 
 
 Ok, let's dive in! 
+
+# Parameterizing the model
 
 The same specimen is analyzed in all nine samples. The rows of $\mathbf{Z}$ represent the samples (of which there are nine), and the columns represent the distinct specimens (of which there is one). 
 
 ```{r}
 Z <- matrix(1, ncol = 1, nrow = 9)
-# colnames(Z) <- NULL
 ```
 
 If you had a study where you had, let's say, two distinct specimens of different compositions to analyze, and 3 samples for each, your $\mathbf{Z}$ might look like $\begin{pmatrix} 1 & 0 \\ 1 & 0 \\ 1 & 0 \\ 0 & 1 \\ 0 & 1 \\ 0 & 1 \end{pmatrix}$. 
 
-We are not interested in estimating detection efficiencies (see the Costea et al vignette if you want to learn to do that!): 
-
-```{r}
-X <- matrix(0, nrow = nrow(W), ncol = 1)
-X_tilde <- matrix(0, nrow = 1, ncol = 1) # TODO(AW)
-```
-
 The true composition of the specimen is that there are eight taxa that are present in 12.5% abundance each, and we ordered them last. Everything else has 0\% abundance. 
 
 ```{r}
-P <- matrix(c(rep(0,240), rep(1/8,8)), nrow = 1, ncol = ncol(W))
+P <- matrix(c(rep(0, 240), rep(1/8, 8)), nrow = 1, ncol = jj)
 ```
 
 and we know this to be true ($\mathbf{p}$ is fixed): 
 
 ```{r}
-P_fixed_indices <- matrix(TRUE, nrow = 1, ncol = ncol(W))
+P_fixed_indices <- matrix(TRUE, nrow = 1, ncol = jj)
 ```
 
 Note that `P_fixed_indices`, `B_fixed_indices`, etc., are how we tell `tinyvamp` if we *do* versus *do not* know the value of these parameters. So by specifying `P` and `P_fixed_indices` as above, we say "keep $\mathbf{p}$ fixed at the values that we tell you; you don't need to estimate it yourself!" 
@@ -141,21 +129,31 @@ Note that `P_fixed_indices`, `B_fixed_indices`, etc., are how we tell `tinyvamp`
 In contrast, we do need to estimate *some* of the $\beta$'s, a.k.a. the detection efficiencies. We want to estimate the detection efficiencies of the mock taxa, but not for the contaminants. 
 
 ```{r}
-B_fixed_indices <- matrix(TRUE, ncol = ncol(W), nrow = ncol(X))
+B_fixed_indices <- matrix(TRUE, ncol = jj, nrow = 1)
 B_fixed_indices[1, 241:247] <- FALSE
 ```
 
-Hang on, why is $\beta_{248}$ fixed? Well, we always need some taxon to compare detection efficiencies to -- otherwise there's no difference between efficiencies 1, 2, and 4 versus 8, 16 and 32! (The fancy term for this is "identifiability constraint".) So here we're deciding to set *Limosilactobacillus fermentum* as the "baseline" taxon, which corresponds to the taxon in the last column of $\mathbf{W}$,
+Hang on, why is $\beta_{248}$ fixed? Well, we always need some taxon to compare detection efficiencies to -- otherwise there's no difference between efficiencies 1, 2, and 4 versus 8, 16 and 32! (The fancy term for this is "identifiability constraint".) So here we're deciding to set *Limosilactobacillus fermentum* as the "baseline" taxon, which corresponds to the taxon in the last column of $\mathbf{W}$. 
 
 Remember that the $\beta$'s give the detection efficiencies on the log-scale, so let's set: 
 
 ```{r}
-B <- matrix(0, ncol = ncol(W), nrow = 1)
+B <- matrix(0, ncol = jj, nrow = 1)
 ```
 
 Note that this analysis treats the contaminant taxa as having the same detection efficiency as *Limosilactobacillus fermentum*.
 
 **If a parameter is** *not fixed* (e.g., $\beta_{241}$ in the above), **the corresponding value is where is** *initialized* **for the estimation algorithm to proceed.**
+
+The rows of `B` correspond to sequencing protocols, and here we have only one protocol -- no data on batches, for example -- hence one row for `B`. You can check out the "Compare experiments" vignette for an example showing how to compare three different experimental protocols! 
+
+$\mathbf{X}$ connects the samples ($n$ rows) to the sequencing protocols ($p$ columns). Here we have only one protocol (no data on batches, for example), so one column. We'll just fill this matrix with 1's to say "estimate efficiencies for our single protocol". 
+
+```{r}
+X <- matrix(1, nrow = nrow(W), ncol = 1)
+```
+
+In contrast, if you had two sequencing protocols on the same mock community, you might set $\begin{pmatrix} 1 & 0 \\ \vdots & \vdots \\ 1 & 0 \\ 0 & 1 \\ \vdots & \vdots \\ 0 & 1 \end{pmatrix}$. 
 
 Ok, phew, that's most of the hard stuff! 
 
@@ -166,7 +164,7 @@ gammas_fixed_indices <- rep(FALSE, nrow(W))
 gammas <- log(apply(W, 1, sum)) + rnorm(nrow(W))
 ```
 
-Now let's talk contamination! We want to assume that the ratio of expected contaminant reads to expected mock reads is proportional to $3^{d}$, where $d$ is the dilution number of the sample ($d_i=0$ corresponds to the undiluted sample). To do this, we set $\tilde{\mathbf{Z}}_i$ proportional to $\exp(\gamma_i) \times 3^{d_i}$ for sample $i$. To address the $3^{d_i}$ piece, we set
+Now let's talk contamination! We assume a single contamination profile, so $\tilde{K}=1$ and the number of columns of $\tilde{\mathbf{Z}}$ is one. We want to assume that the ratio of expected contaminant reads to expected mock reads is proportional to $3^{d}$, where $d$ is the dilution number of the sample ($d_i=0$ corresponds to the undiluted sample). To do this, we set $\tilde{\mathbf{Z}}_i$ proportional to $\exp(\gamma_i) \times 3^{d_i}$ for sample $i$. To address the $3^{d_i}$ piece, we set
 
 ```{r}
 Z_tilde <- matrix(3^(0:8)/exp(mean(log(3^(0:8)))), ncol = 1)
@@ -178,39 +176,33 @@ and to address the $\exp(\gamma_i)$ piece, we set
 Z_tilde_gamma_cols <- 1 
 ```
 
-<!-- TODO(AW) ask DC why both. Not doubling up on biomass info? I guess the gammas are estimated simultaneously across both pieces  -->
-
-AW up to here
+We do want to estimate the contamination intensity, so let's initialize it at zero (on the log-scale) and tell `tinyvamp` to estimate it:
 
 ```{r}
-### gamma_tilde
 gamma_tilde <- matrix(0, nrow = 1, ncol = 1)
-gamma_tilde_fixed_indices <- matrix(FALSE, ncol = ncol(gamma_tilde), nrow = nrow(gamma_tilde))
+gamma_tilde_fixed_indices <- matrix(FALSE, nrow = 1, ncol = 1)
 ```
+
+Finally, we want to tell `tinyvamp` to estimate the contamination profile, which we will initialize uniformly over all taxa. Because there is only one specimen in this study (sampled 9 times), we do need to choose one taxon that we believe is *not* a contaminant. We're going to choose *L. fermentum*, the 248th taxon, but we could have chosen any taxon in the mock (or, if we didn't have a mock community, any taxon more common in the undiluted samples). 
 
 ```{r}
-### P_tilde
-P_tilde <- matrix(1/ncol(W),ncol = ncol(W), nrow = 1)
-P_tilde_fixed_indices <- matrix(FALSE,
-                                ncol = ncol(P_tilde),
-                                nrow = nrow(P_tilde))
-
-# fix contaminants in mock to be zero
-P_tilde[,ncol(P_tilde_fixed_indices)] <- 0
-
-P_tilde_fixed_indices[,ncol(P_tilde_fixed_indices)] <- TRUE
-
-P_tilde[1,!P_tilde_fixed_indices[1,]] <-  rexp(sum(!P_tilde_fixed_indices[1,]))
-P_tilde[1,!P_tilde_fixed_indices[1,]] <- P_tilde[1,!P_tilde_fixed_indices[1,]]/sum(
-    P_tilde[1,!P_tilde_fixed_indices[1,]]
-  )
+P_tilde <- matrix(c(rep(1/(jj - 1), jj - 1), 0), ncol = jj, nrow = 1)
+P_tilde_fixed_indices <- matrix(c(rep(FALSE, jj - 1), TRUE), ncol = jj, nrow = 1)
 ```
 
-Now let's fit the model! 
+Finally, we are not interested in estimating detection efficiencies for the contaminants, so we set $\tilde{\mathbf{X}} = \mathbf{0}$: 
+
+```{r}
+X_tilde <- matrix(0, nrow = 1, ncol = 1) 
+```
+
+# Fitting the model
+
+With all of that hard work parameterizing the model out of the way, we can fit the model! The function we use is `estimate_parameters`, and we give it all of the information we just put together. Also, we're going to use the reweighted estimator, which we generally recommend because it has lower variance when the noise in our data is not Poisson-like... that is, always! 
 
 ```{r}
 full_karstens_model <- estimate_parameters(W = W,
-                                           X = matrix(1,ncol = 1, nrow = 9),
+                                           X = X,
                                            Z = Z,
                                            Z_tilde = Z_tilde,
                                            Z_tilde_gamma_cols = Z_tilde_gamma_cols,
@@ -228,484 +220,83 @@ full_karstens_model <- estimate_parameters(W = W,
                                            criterion = "reweighted_Poisson")
 ```
 
+Wooohooo! That took only a few seconds on my computer, which is pretty impressive given how many parameters there are in this model. The output is a list of named elements, which you can see as follows: 
+
 ```{r}
 full_karstens_model %>% names
 ```
 
-Wooohooo! 
+Let's check everything worked okay:
+
+```{r}
+full_karstens_model$optimization_status
+```
+
+Terrific! The estimated parameter values are in the object `varying`: 
 
 ```{r}
 full_karstens_model$varying %>% as_tibble
 ```
+
+Wow, `r full_karstens_model$varying %>% as_tibble %>% nrow` parameters were estimated pretty quickly! That's thanks to *a lot* of hard work and cleverness on David's part. Lets look specifically at the estimated efficiencies, and I will join it to the taxon names data to make it easier to interpret
+
+```{r, message=FALSE}
+full_karstens_model$varying %>% as_tibble %>% filter(param == "B") %>%
+  inner_join(tibble(j=241:247, name = genera_data[mock_taxa][-8]), by="j")
+```
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+beta_psu <- (full_karstens_model$varying %>% 
+   as_tibble %>% 
+   filter(param == "B") %>%
+   inner_join(tibble(j=241:247, name = genera_data[mock_taxa][-8]), by="j") %>% 
+   filter(name == "Pseudomonas") %>% 
+   pull(value))
+```
+
+On the basis of this model, we estimate that in an equal mixture of *Pseudomonas aeruginosa* and our reference taxon, *L. fermentum*, we expect on average to observe exp(`r beta_psu %>% round(2)`) = `r beta_psu %>% exp %>% round(2)` *P. aeruginosa*  reads for each *L. fermentum* read. Since all of the estimated $\beta$'s were negative, this tells us that *L. fermentum* is the most easily detected taxon in the mock community.
+
+Aside: The estimated values in this table are pretty similar to those from our paper (Section 12.3), with differences being due to different subsets of the data being used for fitting. Here we used all nine samples, whereas for Table 2 we only used two samples. 
+
+You can look at which other parameters were estimated as follows: 
 
 
 ```{r}
 full_karstens_model$varying %>% pull(param) %>% unique
 ```
 
+To obtain 95% confidence intervals for the detection efficiencies, you can run the following... but be prepared to wait! 
 
-```{r}
-# full_cis <- bootstrap_ci(W,
-#                          fitted_model = full_karstens_model,
-#                          n_boot = 100,
-#                          parallelize = TRUE,
-#                          seed  = 4323)
+```{r, eval=FALSE}
+full_cis <- bootstrap_ci(W,
+                         alpha = 0.05, # to get 95% CIs
+                         fitted_model = full_karstens_model,
+                         n_boot = 500,
+                         parallelize = TRUE,
+                         ncores = 6,
+                         seed  = 4324)
 ```
 
-```{r}
-# full_cis$ci %>%
-#   filter(param == "B")
+and you can use the following to pull out the confidence intervals
+
+```{r, eval=FALSE}
+full_cis$ci %>%
+  filter(param == "B")
+full_cis$ci %>%
+  filter(param == "P_tilde") # %>% tail(20)
 ```
 
+Please note that confidence intervals (even clever subsampled bootstrapped CIs like this one) inherently rely a large sample to have correct coverage. So while this is a useful uncertainty quantification tool, I wouldn't put much store in the 95-percent-ness of these intervals, because they are only based on 9 samples. 
 
-<!-- # Using cross-fold validation -->
+<!-- Side note: If you look at `full_karstens_model$varying %>% filter(param == "P_tilde")`, you'll notice that all of the mock taxa had some non-zero estimated relative abundance in the contamination profile. This is not surprising, as point estimates for maximum likelihood estimates are rarely on the boundary of the parameter space. However, if you run 500 bootstraps with `seed  = 4324` you'll find that 5 out of the 7 of these taxa had 95% confidence intervals that contain zero. Go tinyvamp!  -->
 
-<!-- ```{r} -->
-<!-- ###### Construct helper function to specify models ###### -->
-<!-- specify_dilution_model <- function( -->
-<!--     samples_treated_as_known, -->
-<!--     samples_treated_as_unknown, -->
-<!--     intercept_in_Z_tilde = FALSE, -->
-<!--     separate_dilution_series = FALSE, -->
-<!--     use_alpha_tilde = FALSE, -->
-<!--     beta_for_dilution = FALSE, -->
-<!--     W){ -->
-<!--   known_indicator <- as.numeric(1:9 %in% samples_treated_as_known) -->
+<!-- This makes two important points: it's important to consider the uncertainty in the estimates, and that the tinyvamp model + algorithm is pretty good (because it distinguished between contamination and) -->
 
+# Wrap-up
 
-<!--   dilutions <- 0:8 -->
+I hope you found this to be helpful in setting up the `tinyvamp` model to analyze your dilution series! Please let me (Amy) know if you have any questions or would like further clarification via a GitHub issue (preferred), or via email. 
 
-<!--   ### -->
-<!--   Z <- cbind(known_indicator, -->
-<!--              1 - known_indicator) -->
-
-<!--   colnames(Z) <- NULL -->
-
-<!--   ### Z_tilde -->
-<!--   # set up dilutions as covariate -->
-<!--   Z_tilde <- matrix(3^(dilutions)/exp(mean(log(3^(0:8)))),ncol = 1) -->
-
-<!--   # separate dilution covariate into two columns if needed -->
-<!--   if(separate_dilution_series){ -->
-<!--     Z_tilde <- cbind(Z_tilde[,1]*known_indicator, -->
-<!--                      Z_tilde[,1]*(1 - known_indicator)) -->
-<!--   } -->
-
-<!--   # add intercept column if needed -->
-<!--   if(intercept_in_Z_tilde){ -->
-<!--     Z_tilde <- cbind(1, Z_tilde) -->
-<!--   } -->
-
-<!--   Z_tilde_gamma_cols <- 1:ncol(Z_tilde) -->
-
-<!--   if(use_alpha_tilde){ -->
-
-<!--     Z_tilde_list <- list( -->
-<!--       known_indicator*Z_tilde[,ncol(Z_tilde),drop = FALSE], -->
-<!--       (1 - known_indicator)*Z_tilde[,ncol(Z_tilde),drop = FALSE] -->
-<!--     ) -->
-<!--     if(intercept_in_Z_tilde){ -->
-<!--       Z_tilde_list[[1]] <- cbind(1, Z_tilde_list[[1]]) -->
-<!--       Z_tilde_list[[2]] <- cbind(0, Z_tilde_list[[2]]) -->
-<!--     } -->
-<!--     Z_tilde <- NULL -->
-<!--     alpha_tilde <- rnorm(1) -->
-<!--   } else{ -->
-<!--     Z_tilde_list <- NULL -->
-<!--     alpha_tilde <- NULL -->
-<!--   } -->
-
-
-<!--   ### gamma_tilde -->
-<!--   K_tilde <- max(Z_tilde_gamma_cols) -->
-<!--   gamma_tilde <- matrix(-5, nrow = K_tilde,ncol = 1) -->
-<!--   gamma_tilde[] <- rnorm(K_tilde,-2) -->
-
-<!--   gamma_tilde_fixed_indices <- matrix(FALSE, ncol = ncol(gamma_tilde), -->
-<!--                                       nrow = nrow(gamma_tilde)) -->
-
-<!--   ### P_tilde -->
-<!--   P_tilde <- matrix(1/ncol(W),ncol = ncol(W), nrow = K_tilde) -->
-<!--   P_tilde_fixed_indices <- matrix(FALSE, -->
-<!--                                   ncol = ncol(P_tilde), -->
-<!--                                   nrow = nrow(P_tilde)) -->
-
-<!--   # fix contaminants in mock to be zero -->
-<!--   P_tilde[,ncol(P_tilde_fixed_indices)] <- 0 -->
-
-<!--   P_tilde_fixed_indices[,ncol(P_tilde_fixed_indices)] <- TRUE -->
-
-<!--   for(k_tilde in 1:nrow(P_tilde)){ -->
-<!--     P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]] <- -->
-<!--       rexp(sum(!P_tilde_fixed_indices[k_tilde,])) -->
-<!--     P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]] <- -->
-<!--       P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]]/sum( -->
-<!--         P_tilde[k_tilde,!P_tilde_fixed_indices[k_tilde,]] -->
-<!--       ) -->
-<!--   } -->
-
-<!--   ### B -->
-<!--   B <- matrix(0,ncol = ncol(W), -->
-<!--               nrow = 1) -->
-
-<!--   if(beta_for_dilution){ -->
-<!--     B <- rbind(B,B) -->
-<!--   } -->
-
-
-<!--   B_fixed_indices <- matrix(TRUE,ncol = ncol(B),nrow = nrow(B)) -->
-<!--   B_fixed_indices[,ncol(B) - 7:1] <- FALSE -->
-
-<!--   B[!B_fixed_indices] <- rnorm(sum(!B_fixed_indices)) -->
-
-<!--   ### X -->
-<!--   X <- matrix(1,nrow = nrow(W),ncol = 1) -->
-<!--   if(beta_for_dilution){ -->
-<!--     X <- cbind(X,0:8) -->
-<!--   } -->
-
-<!--   ### X_tilde -->
-<!--   X_tilde <- matrix(0, nrow = K_tilde, -->
-<!--                     ncol = nrow(B)) -->
-
-<!--   ### gammas -->
-
-<!--   gammas <- log(apply(W,1,sum)) -->
-<!--   gammas <- gammas + rnorm(length(gammas)) -->
-
-<!--   gammas_fixed_indices <-rep(F,length(gammas)) -->
-
-<!--   ### P -->
-<!--   P <- rbind(c(rep(0,ncol(W) - 8), rep(1/8,8)), -->
-<!--              rep(1/ncol(W),ncol(W))) -->
-
-<!--   P_fixed_indices <- matrix(FALSE,ncol = ncol(W),nrow = 2) -->
-<!--   P_fixed_indices[1,] <- TRUE -->
-
-<!--   P[2,!P_fixed_indices[2,]] <- rexp(sum(!P_fixed_indices[2,])) -->
-<!--   P[2,!P_fixed_indices[2,]] <-   P[2,!P_fixed_indices[2,]]/sum( -->
-<!--     P[2,!P_fixed_indices[2,]] -->
-<!--   ) -->
-
-
-<!--   return(list( -->
-<!--     "Z" = Z, -->
-<!--     "Z_tilde" = Z_tilde, -->
-<!--     "Z_tilde_gamma_cols" = Z_tilde_gamma_cols, -->
-<!--     "P" = P, -->
-<!--     "P_fixed_indices" = P_fixed_indices, -->
-<!--     "gammas" = gammas, -->
-<!--     "gammas_fixed_indices" = gammas_fixed_indices, -->
-<!--     "X_tilde" = X_tilde, -->
-<!--     "X" = X, -->
-<!--     "B" = B, -->
-<!--     "B_fixed_indices" = B_fixed_indices, -->
-<!--     "P_tilde" = P_tilde, -->
-<!--     "P_tilde_fixed_indices" = P_tilde_fixed_indices, -->
-<!--     "gamma_tilde" = gamma_tilde, -->
-<!--     "gamma_tilde_fixed_indices" = gamma_tilde_fixed_indices, -->
-<!--     "alpha_tilde" = alpha_tilde, -->
-<!--     "Z_tilde_list" = Z_tilde_list -->
-<!--   )) -->
-
-<!-- } -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- ######## Three-fold CV ######## -->
-<!-- folds <- cbind(c(1,4,7),c(2,5,8),c(3,6,9)) -->
-
-<!-- fits <- vector(ncol(folds), -->
-<!--                       mode = "list") -->
-
-<!-- tries <- fits -->
-
-<!-- for(try in 1:length(tries)){ -->
-<!--   tries[[try]] <- vector(1,mode = "list") -->
-<!-- } -->
-<!-- set.seed(829343) -->
-
-<!-- unknown_samples <- folds[,fold] -->
-<!-- known_samples <- setdiff(1:9,unknown_samples) -->
-
-<!-- inputs <- specify_dilution_model( -->
-<!--   samples_treated_as_known = known_samples, -->
-<!--   samples_treated_as_unknown = unknown_samples, -->
-<!--   intercept_in_Z_tilde = FALSE, -->
-<!--   separate_dilution_series = FALSE, -->
-<!--   beta_for_dilution = FALSE, -->
-<!--   use_alpha_tilde = TRUE, -->
-<!--   W = W) -->
-
-<!-- tries[[fold]][[try]] <- -->
-<!--   estimate_parameters(W = W, -->
-<!--                       X = inputs$X, -->
-<!--                       Z = inputs$Z, -->
-<!--                       Z_tilde = inputs$Z_tilde, -->
-<!--                       Z_tilde_gamma_cols = inputs$Z_tilde_gamma_cols, -->
-<!--                       gammas = inputs$gammas, -->
-<!--                       gammas_fixed_indices = inputs$gammas_fixed_indices, -->
-<!--                       P = inputs$P, -->
-<!--                       P_fixed_indices = inputs$P_fixed_indices, -->
-<!--                       B = inputs$B, -->
-<!--                       B_fixed_indices = inputs$B_fixed_indices, -->
-<!--                       X_tilde = inputs$X_tilde, -->
-<!--                       P_tilde = inputs$P_tilde, -->
-<!--                       P_tilde_fixed_indices = inputs$P_tilde_fixed_indices, -->
-<!--                       gamma_tilde = inputs$gamma_tilde, -->
-<!--                       gamma_tilde_fixed_indices = inputs$gamma_tilde_fixed_indices, -->
-<!--                       alpha_tilde = inputs$alpha_tilde, -->
-<!--                       Z_tilde_list = inputs$Z_tilde_list, -->
-<!--                       barrier_t = 1, #starting value of reciprocal barrier penalty coef. -->
-<!--                       barrier_scale = 10, #increments for value of barrier penalty -->
-<!--                       max_barrier = 1e12, #maximum value of barrier_t -->
-<!--                       initial_conv_tol = 1000, -->
-<!--                       final_conv_tol = 0.1, -->
-<!--                       final_f = 1e-6, -->
-<!--                       constraint_tolerance = 1e-10, -->
-<!--                       hessian_regularization = 0.01, -->
-<!--                       criterion = "reweighted_Poisson", -->
-<!--                       subproblem_method = "Newton", -->
-<!--                       verbose = TRUE, -->
-<!--                       profile_P = TRUE, -->
-<!--                       profiling_maxit = 25, -->
-<!--                       wts = NULL) -->
-
-
-<!-- lls <- sapply(1:1, -->
-<!--               function(x) tries[[fold]][[x]]$objective) -->
-<!-- best_fit <- which.min(lls) -->
-
-<!-- fits[[fold]] <- tries[[fold]][[best_fit]] -->
-
-
-<!-- read_proportions <- vector(9, mode = "list") -->
-<!-- names(read_proportions) <- paste("D",c(0:8), sep ="") -->
-<!-- for(dilution in 0:8){ -->
-<!--   read_counts <- W[paste("D",dilution, sep = "", collapse = ""),] -->
-<!--   read_prop <- read_counts/sum(read_counts) -->
-<!--   read_proportions[[dilution + 1]] <- read_prop -->
-<!-- } -->
-
-<!-- mock_taxa_names <- sapply(mock_taxa, -->
-<!--                           function(x) paste(as.character( -->
-<!--                             tax_table(karstens_phyloseq)[x,6:7]), -->
-<!--                             sep = " ", -->
-<!--                             collapse = " ")) -->
-
-<!-- mock_taxa_names["ASV_1"] <- "Limosilactobacillus (species unclassified)" -->
-<!-- values <- c(do.call(c,read_proportions), c(rep(0,240),rep(1/8,8))) -->
-<!-- taxa_names <- c("Salmonella (species unclassified)", -->
-<!--                 rep("Other",239), -->
-<!--                 mock_taxa_names) -->
-<!-- taxa_names <- factor(taxa_names, -->
-<!--                      levels = c(mock_taxa_names, -->
-<!--                                 "Salmonella (species unclassified)", -->
-<!--                                 "Other")) -->
-<!-- dilutions <- rep(c(0:8,"Theoretical"),each = 248) -->
-
-<!-- observed_read_proportions <- -->
-<!--   data.frame("Read_Proportions" = values, -->
-<!--              "Taxon" = rep(taxa_names,10), -->
-<!--              "Dilution" = as.character(dilutions)) -->
-
-<!-- observed_read_proportions$Type <- sapply(observed_read_proportions$Dilution, -->
-<!--                                          function(x) ifelse(x == "Theoretical", -->
-<!--                                                             "Theoretical", -->
-<!--                                                             "Observed")) -->
-
-<!-- observed_props <- observed_read_proportions %>% -->
-<!--   group_by(Dilution, Taxon, Type) %>% -->
-<!--   summarize(Proportion = sum(Read_Proportions)) -->
-
-<!-- karstens_3fold <- readRDS("karstens_3fold") -->
-
-
-<!-- fitted_proportions_3fold <- karstens_3fold %>% -->
-<!--   filter(param == "P") %>% -->
-<!--   select(c("value","Fold","j")) %>% -->
-<!--   mutate("Taxon" = sapply(j,function(x) -->
-<!--     ifelse(x<241 & x>1,"Other", -->
-<!--            ifelse(x == 241, -->
-<!--                   "P. aeruginosa", -->
-<!--                   ifelse(x == 242, -->
-<!--                          "E. coli", -->
-<!--                          ifelse(x == 243, -->
-<!--                                 "S. enterica", -->
-<!--                                 ifelse(x == 244, -->
-<!--                                        "E. faecium", -->
-<!--                                        ifelse(x == 245, -->
-<!--                                               "S. aureus", -->
-<!--                                               ifelse(x == 246, -->
-<!--                                                      "L. monocytogenes", -->
-<!--                                                      ifelse(x == 247, -->
-<!--                                                             "B. halotolerans", -->
-<!--                                                             ifelse(x == 248, -->
-<!--                                                                    "L. fermentum", -->
-<!--                                                                    "S. [unclassified]"))))))))))) -->
-
-
-<!-- fitted_proportions_3fold$Taxon %<>% -->
-<!--   factor(levels = c("P. aeruginosa", -->
-<!--                     "E. coli", -->
-<!--                     "S. enterica", -->
-<!--                     "L. fermentum", -->
-<!--                     "E. faecium", -->
-<!--                     "S. aureus", -->
-<!--                     "L. monocytogenes", -->
-<!--                     "B. halotolerans", -->
-<!--                     "S. [unclassified]", -->
-<!--                     "Other")) -->
-
-<!-- taxon_conversion <- cbind(c("P. aeruginosa", -->
-<!--                             "E. coli", -->
-<!--                             "S. enterica", -->
-<!--                             "E. faecium", -->
-<!--                             "S. aureus", -->
-<!--                             "L. monocytogenes", -->
-<!--                             "B. halotolerans", -->
-<!--                             "L. fermentum", -->
-<!--                             "S. [unclassified]", -->
-<!--                             "Other"), -->
-<!--                           c( -->
-<!--                             "Pseudomonas aeruginosa", -->
-<!--                             "Escherichia-Shigella coli", -->
-<!--                             "Salmonella enterica", -->
-<!--                             "Enterococcus faecium", -->
-<!--                             "Staphylococcus aureus", -->
-<!--                             "Listeria monocytogenes", -->
-<!--                             "Bacillus halotolerans", -->
-<!--                             "Limosilactobacillus (species unclassified)", -->
-<!--                             "Salmonella (species unclassified)", -->
-<!--                             "Other")) -->
-
-
-
-<!-- observed_props$Taxon <- sapply(observed_props$Taxon, -->
-<!--                                function(d) taxon_conversion[taxon_conversion[,2]==d,1]) -->
-
-<!-- observed_props <- cbind(observed_props[,1:3], -->
-<!--                         data.frame("Fold" = -->
-<!--                                      sapply(observed_props$Type, -->
-<!--                                             function(x) -->
-<!--                                               ifelse(x == "Observed", -->
-<!--                                                      x, -->
-<!--                                                      "Theoretical \nComposition"))), -->
-
-<!--                         observed_props[,4]) -->
-
-<!-- fitted_props_3fold <- data.frame("Dilution" = "Not Applicable", -->
-<!--                                  "Taxon" = fitted_proportions_3fold$Taxon, -->
-<!--                                  "Type" = "Fitted", -->
-<!--                                  "Fold" = fitted_proportions_3fold$Fold, -->
-<!--                                  "Proportion" = fitted_proportions_3fold$value) -->
-
-<!-- results_taxa_lumped_3fold <- rbind(observed_props, -->
-<!--                                    fitted_props_3fold) -->
-
-<!-- results_taxa_lumped_3fold$Taxon %<>% -->
-<!--   factor(levels = c("P. aeruginosa", -->
-<!--                     "E. coli", -->
-<!--                     "S. enterica", -->
-<!--                     "L. fermentum", -->
-<!--                     "E. faecium", -->
-<!--                     "S. aureus", -->
-<!--                     "L. monocytogenes", -->
-<!--                     "B. halotolerans", -->
-<!--                     "S. [unclassified]", -->
-<!--                     "Other")) -->
-
-<!-- lumped_taxa <- unique(results_taxa_lumped_3fold$Taxon) -->
-<!-- names(lumped_taxa) <- c("P. aeruginosa", -->
-<!--                         "E. coli", -->
-<!--                         "S. enterica", -->
-<!--                         "E. faecium", -->
-<!--                         "S. aureus", -->
-<!--                         "L. monocytogenes", -->
-<!--                         "B. halotolerans", -->
-<!--                         "L. fermentum", -->
-<!--                         "S. [unclassified]", -->
-<!--                         "Other") -->
-<!-- results_taxa_lumped_3fold$nice_taxon <- factor(sapply(results_taxa_lumped_3fold$Taxon, -->
-<!--                                                 function(x) names(lumped_taxa)[lumped_taxa ==x] ), -->
-<!--                                          levels = c("P. aeruginosa", -->
-<!--                                                     "E. coli", -->
-<!--                                                     "S. enterica", -->
-<!--                                                     "L. fermentum", -->
-<!--                                                     "E. faecium", -->
-<!--                                                     "S. aureus", -->
-<!--                                                     "L. monocytogenes", -->
-<!--                                                     "B. halotolerans", -->
-<!--                                                     "S. [unclassified]", -->
-<!--                                                     "Other")) -->
-
-<!-- # results_taxa_lumped_3fold %>% View() -->
-<!-- # observed_proportions <- -->
-
-
-<!-- fitted_prop_plot <- -->
-<!--   results_taxa_lumped_3fold %>% -->
-<!--   mutate(Fold = sapply(Fold, function(x) ifelse( -->
-<!--     x%in% 1:3, -->
-<!--     paste("Fold ",x, -->
-<!--                                                sep = "", -->
-<!--                                                collapse = ""), -->
-<!--     x))) %>% -->
-<!--   # filter(Fitted=="Observed") %>% -->
-<!--   filter(Fold != "Observed") %>% -->
-<!--   # filter(Type %in% c("Fitted","Theoretical")) %>% -->
-<!--   ggplot() + -->
-<!--   geom_point(aes(x= Taxon, y = Proportion), -->
-<!--              size = .5) + -->
-<!--   geom_line(aes(x= Taxon, y = Proportion, -->
-<!--                 group = interaction(Dilution,Fold), -->
-<!--                 linetype = Type, -->
-<!--                 color = Fold))+ -->
-<!--   theme_bw() + -->
-<!--   guides(linetype = guide_legend(ncol = 1, -->
-<!--                                  keyheight=0.15, -->
-<!--                                  default.unit="inch"), -->
-<!--          color = guide_legend(ncol = 1, -->
-<!--                               keyheight=0.1, -->
-<!--                               default.unit="inch")) + -->
-<!--   theme(axis.text.x = element_text(angle = 45,  hjust=1), -->
-
-<!--         legend.spacing.y = unit(0.25, 'cm')) + -->
-<!--   scale_color_manual(values = sequential_hcl(4, palette = "LightGrays")[4:1]) + -->
-<!--   guides(linetype=guide_legend(title="Type")) + -->
-<!--   xlab("Taxon") + -->
-<!--   ylab("Proportion") + -->
-<!--   ylim(c(0,.8)) -->
-
-
-<!-- observed_prop_plot <- -->
-<!--   results_taxa_lumped_3fold %>% -->
-<!--   # filter(Fitted=="Observed") %>% -->
-<!--   filter(!(Fold %in% 1:3)) %>% -->
-<!--   # filter(Type %in% c("Fitted","Theoretical")) %>% -->
-<!--   ggplot() + -->
-<!--   geom_point(aes(x= Taxon, y = Proportion), -->
-<!--              size = .5) + -->
-<!--   geom_line(aes(x= Taxon, y = Proportion, -->
-<!--                 group = interaction(Dilution,Fold), -->
-<!--                 linetype = Type, -->
-<!--                 color = Dilution))+ -->
-<!--   theme_bw() + -->
-<!--   guides(linetype = guide_legend(ncol = 1, -->
-<!--                                  keyheight=0.15, -->
-<!--                                  default.unit="inch"), -->
-<!--          color = guide_legend(ncol = 1, -->
-<!--                               keyheight=0.1, -->
-<!--                               default.unit="inch")) + -->
-<!--   theme(axis.text.x = element_text(angle = 45,  hjust=1), -->
-
-<!--         legend.spacing.y = unit(0.25, 'cm')) + -->
-<!--   scale_color_manual(values = sequential_hcl(12, palette = "LightGrays")[c(1:9,1)]) + -->
-<!--   guides(linetype=guide_legend(title="")) + -->
-<!--   xlab("Taxon") + -->
-<!--   ylab("Proportion") + -->
-<!--   ylim(c(0,.8)) -->
-<!-- ``` -->
+Happy estimating and experiment-designing! 
 
 ## References
 

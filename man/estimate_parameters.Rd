@@ -49,7 +49,7 @@ estimate_parameters(
 indicates the proportional contribution of specimen \eqn{j} to sample \eqn{i}. Rows must
 sum to 1 or be identically 0.}
 
-\item{Z_tilde}{The spurious read design -- an \eqn{n x \tilde{K}} matrix where
+\item{Z_tilde}{The spurious read design -- an \eqn{n \times \tilde{K}} matrix where
 \eqn{\tilde{K}} is the number of spurious read sources modeled.}
 
 \item{Z_tilde_gamma_cols}{A numeric vector containing the columns of Z_tilde which should be
