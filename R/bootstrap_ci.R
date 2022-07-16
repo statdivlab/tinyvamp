@@ -1,5 +1,8 @@
+#' Apply the Bayesian subsampled bootstrap to a fitted tinyvamp model
+#' 
 #' @import stats
 #' @import parallel
+#' 
 #' 
 #' @export
 bootstrap_ci <- function(W,
