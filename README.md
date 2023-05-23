@@ -33,6 +33,16 @@ You can install the development version of tinyvamp from
 remotes::install_github("statdivlab/tinyvamp")
 ```
 
+If you haven’t already, you may need to install `fastnnls` and `logsum`,
+too:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("ailurophilia/fastnnls")
+remotes::install_github("ailurophilia/logsum")
+remotes::install_github("statdivlab/tinyvamp")
+```
+
 <!-- ## Example -->
 <!-- This is a basic example which shows you how to solve a common problem: -->
 <!-- ```{r example} -->
