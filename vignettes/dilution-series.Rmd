@@ -133,6 +133,8 @@ B_fixed_indices <- matrix(TRUE, ncol = jj, nrow = 1)
 B_fixed_indices[1, 241:247] <- FALSE
 ```
 
+(`B_fixed_indices` = FALSE means "do estimate these beta's!")
+
 Hang on, why is $\beta_{248}$ fixed? Well, we always need some taxon to compare detection efficiencies to -- otherwise there's no difference between efficiencies 1, 2, and 4 versus 8, 16 and 32! (The fancy term for this is "identifiability constraint".) So here we're deciding to set *Limosilactobacillus fermentum* as the "baseline" taxon, which corresponds to the taxon in the last column of $\mathbf{W}$. 
 
 Remember that the $\beta$'s give the detection efficiencies on the log-scale, so let's set: 
@@ -291,6 +293,13 @@ Please note that confidence intervals (even clever subsampled bootstrapped CIs l
 <!-- Side note: If you look at `full_karstens_model$varying %>% filter(param == "P_tilde")`, you'll notice that all of the mock taxa had some non-zero estimated relative abundance in the contamination profile. This is not surprising, as point estimates for maximum likelihood estimates are rarely on the boundary of the parameter space. However, if you run 500 bootstraps with `seed  = 4324` you'll find that 5 out of the 7 of these taxa had 95% confidence intervals that contain zero. Go tinyvamp!  -->
 
 <!-- This makes two important points: it's important to consider the uncertainty in the estimates, and that the tinyvamp model + algorithm is pretty good (because it distinguished between contamination and) -->
+
+# Other considerations
+
+In the above analysis, we estimated efficiencies of all taxa relative to ??. Furthermore, for taxon that were not present in the mock, we set their efficiency to be equal to the detection efficiency of ??. But how did we pick ?? over all the other taxa in the mock? 
+
+If you're interested, let Amy know and she'll prioritize this. 
+
 
 # Wrap-up
 
