@@ -265,7 +265,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
                                   wt= wts))
       
       if(inherits(pre_wts,"try-error")){
-        Stop("Fatal error in cirPAVA")
+        stop("Fatal error in cirPAVA")
       }
     }
     
