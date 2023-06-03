@@ -645,10 +645,6 @@ alpha_tilde and matrices in Z_tilde_list.)")
       
     }
     
-    
-    
-    
-    
     if(verbose){message(paste("Fit barrier sub-problem with t = ",
                               barrier_t,".", sep = "", collapse = ""))}
     
@@ -660,9 +656,6 @@ alpha_tilde and matrices in Z_tilde_list.)")
   varying_df <- lr_to_ra(fixed_df,
                          varying_lr_df,
                          varying_df)
-  
-  
-  
   
   temp_params <- dataframes_to_parameters(fixed_df,
                                           varying_df)
