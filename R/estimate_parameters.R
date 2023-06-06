@@ -249,7 +249,17 @@ alpha_tilde and matrices in Z_tilde_list.)")
     
     squerror_long <- (W_long - means_long)^2
     
-    pre_wts <- tryCatch(cir::cirPAVA(y = squerror_long, x = means_long, wt= wts), 
+    ### Amy's edit June 5 2023 ### 
+    # TODO fix to reorder by x 
+    
+    ## TODO confirm this works as intended
+    
+    pre_wts <- tryCatch(cir::cirPAVA(y = squerror_long, 
+                                     x = means_long, 
+                                     wt= wts), 
+                        # cir::cirPAVA(y = squerror_long[order(means_long)], 
+                        #              x = means_long[order(means_long)], 
+                        #              wt= wts[order(means_long)])[rank(means_long)], 
                         error = function(c) { 
                           if (verbose) 
                             message("Fitted means are the same, breaking cirPAVA...\nNot to worry! Jitter and refit...\n")
@@ -257,6 +267,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
     )
     
     if(is.null(pre_wts)) { # i.e., did the above error
+      
       # add tiny amount of jitter to means_long so that all values are unique;
       # suspected bug in cir package otherwise causes errors at least
       # some of the time

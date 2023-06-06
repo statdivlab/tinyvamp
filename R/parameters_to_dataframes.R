@@ -16,7 +16,15 @@ parameters_to_dataframes <- function(P,
   K_tilde <- nrow(P_tilde)
   p_B <- nrow(B)
   n <- nrow(as.matrix(gammas,ncol = 1))
-
+  
+  if(length(c(J, K, K_tilde, p_B, n)) < 5) {
+    badbad <- which(sapply(c(J, K, K_tilde, p_B, n), is.null))
+    bad_param <- c("J", "K", "K_tilde", "p_B", "n")[badbad]
+    stop(c("Unfortunately, one of J, K, K_tilde, p_B or n is NULL.\n", 
+           "One of P, P_tilde, B or gammas may be a vector, not a matrix.\n", 
+           "Please try again."))
+  }
+  
   P_fixed_indices <- apply(P_fixed_indices, c(1,2), as.logical)
   P_tilde_fixed_indices <- apply(P_tilde_fixed_indices, c(1,2), as.logical)
 

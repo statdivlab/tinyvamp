@@ -200,7 +200,7 @@ X_tilde <- matrix(0, nrow = 1, ncol = 1)
 
 # Fitting the model
 
-With all of that hard work parameterizing the model out of the way, we can fit the model! The function we use is `estimate_parameters`, and we give it all of the information we just put together. Also, we're going to use the reweighted estimator, which we generally recommend because it has lower variance when the noise in our data is not Poisson-like... that is, always! 
+With all of that hard work parameterizing the model out of the way, we can fit the model! The function we use is `estimate_parameters`, and we give it all of the information we just put together. ~~Also, we're going to use the reweighted estimator, which we generally recommend because it has lower variance when the noise in our data is not Poisson-like... that is, always!~~ While we're still debugging an issue in the `cir` package, we'll leave `criterion = "Poisson"`. 
 
 ```{r}
 full_karstens_model <- estimate_parameters(W = W,
@@ -219,10 +219,10 @@ full_karstens_model <- estimate_parameters(W = W,
                                            P_tilde_fixed_indices = P_tilde_fixed_indices,
                                            gamma_tilde = gamma_tilde,
                                            gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,
-                                           criterion = "reweighted_Poisson")
+                                           criterion = "Poisson") 
 ```
 
-Wooohooo! That took only a few seconds on my computer, which is pretty impressive given how many parameters there are in this model. The output is a list of named elements, which you can see as follows: 
+Wooohooo! That took only a minute or two on my computer, which is pretty impressive given how many parameters there are in this model. The output is a list of named elements, which you can see as follows: 
 
 ```{r}
 full_karstens_model %>% names
