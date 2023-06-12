@@ -28,18 +28,18 @@ deriv_criterion_lr <- function(W,
                                include_log_penalty_derivatives = TRUE,
                                return_info = FALSE,
                                wts = NULL,
-                               gmm_inv_wts = NULL){
+                               gmm_inv_wts = NULL) {
   
   n <- nrow(W)
   J <- ncol(W)
   
-  if(lr_scale){
+  if (lr_scale) {
     varying_df <- lr_to_ra(fixed_df,
                            varying_lr_df,
                            varying_df)
   }
   
-  # if(is.null(varying_lr_df)){
+  # if (is.null(varying_lr_df)) {
   #   varying_lr_df <-   ra_to_lr(varying_df)
   # }
   
@@ -47,8 +47,8 @@ deriv_criterion_lr <- function(W,
                                      varying_df)
   
   log_P <- lapply(1:K,
-                  function(k){
-                    if(k %in% which_k_p){
+                  function(k) {
+                    if (k %in% which_k_p) {
                       rho <- c(varying_lr_df$value[varying_lr_df$param == "rho" &
                                                      varying_lr_df$k == k],0);
                       rho_cent <- rho -
@@ -60,8 +60,8 @@ deriv_criterion_lr <- function(W,
                     return(rho_cent)})
   
   log_P_tilde <- lapply(1:K_tilde,
-                        function(k){
-                          if(k %in% which_k_p_tilde){
+                        function(k) {
+                          if (k %in% which_k_p_tilde) {
                             rho <-
                               c(varying_lr_df$value[varying_lr_df$param == "rho_tilde" &
                                                       varying_lr_df$k == k],0);
@@ -147,21 +147,21 @@ deriv_criterion_lr <- function(W,
   means_long <- do.call(c,means_long)
   
   ### only for Poisson:
-  if(criterion == "Poisson"){
+  if (criterion == "Poisson") {
     V <- diag(1/means_long)
   } else{
     V <- diag(rep(1, length(means_long)))
   }
   
-  if(!is.null(wts)){
+  if (!is.null(wts)) {
     diag(V) <- diag(V)*wts
   }
-  if(!is.null(gmm_inv_wts)){
+  if (!is.null(gmm_inv_wts)) {
     diag(V) <- diag(V)/gmm_inv_wts
   }
   # V <- as.matrix.csr(V,nrow = nrow(V))
   V <- as(V, "sparseMatrix")
-  if(return_info){
+  if (return_info) {
     V2 <- as(sqrt(abs(V)),"sparseMatrix")
   }
   # V2 <- as.matrix.csr(sqrt( diag(1/means_long)), nrow = nrow(V))
@@ -179,11 +179,11 @@ deriv_criterion_lr <- function(W,
   # step_dir <- qr.solve(info,-crit_grad)
   
   # crit_grad <- crit_grad*V_gm*jacobian_gm
-  if(return_info){
+  if (return_info) {
     pre_info <- V2 %*% jacobian
     
     # crit_info <- t(pre_info) %*% pre_info
-    if(is.null(wts)){
+    if (is.null(wts)) {
       crit_info <- Matrix::crossprod(pre_info)
     } else{
       crit_info <- Matrix::crossprod(pre_info,diag(sign(wts)) %*% pre_info)
@@ -191,59 +191,59 @@ deriv_criterion_lr <- function(W,
   }
   
   ### log_penalties
-  if(include_log_penalty_derivatives){
-    lp_grad <- rep(0,sum(!(varying_lr_df$param %in% c("rho","rho_tilde",
+  if (include_log_penalty_derivatives) {
+    lp_grad <- rep(0, sum(!(varying_lr_df$param %in% c("rho","rho_tilde",
                                                       "alpha_tilde"))))
-    if(return_info){
-      lp_hess <- matrix(0, ncol = length(lp_grad),nrow = length(lp_grad))
+    if (return_info) {
+      lp_hess <- matrix(0,  ncol = length(lp_grad),nrow = length(lp_grad))
     }
     which_rho_k <- unique(varying_lr_df$k[varying_lr_df$param == "rho"])
     which_rho_tilde_k <-
       unique(varying_lr_df$k[varying_lr_df$param == "rho_tilde"])
     
-    for(k in which_rho_k){
+    for(k in which_rho_k) {
       temp_rho <- varying_lr_df$value[varying_lr_df$param == "rho" &
                                         varying_lr_df$k == k]
       
       #calculate and tack on grad of penalty
       lp_grad <- c(lp_grad, log_penalty_grad(temp_rho,barrier_t))
       
-      if(return_info){
+      if (return_info) {
         #calculate hessian of penalty
         new_hess_piece <- log_penalty_hess(temp_rho,barrier_t)
         
         #tack new block of penalty hessian onto existing penalty hessian
         hess_rows <- nrow(lp_hess)
         new_rows <- nrow(new_hess_piece)
-        new_hess_piece <- cbind(matrix(0,nrow = new_rows,
+        new_hess_piece <- cbind(matrix(0, nrow = new_rows,
                                        ncol = hess_rows),
                                 new_hess_piece)
         lp_hess <- cbind(lp_hess,
-                         matrix(0,nrow = hess_rows,
+                         matrix(0, nrow = hess_rows,
                                 ncol = new_rows))
         lp_hess <- rbind(lp_hess,new_hess_piece)
       }
     }
     
-    for(k in which_rho_tilde_k){
+    for(k in which_rho_tilde_k) {
       temp_rho_tilde <- varying_lr_df$value[varying_lr_df$param == "rho_tilde" &
                                               varying_lr_df$k == k]
       
       #calculate and tack on grad of penalty
       lp_grad <-  c(lp_grad, log_penalty_grad(temp_rho_tilde,barrier_t))
       
-      if(return_info){
+      if (return_info) {
         #calculate hessian of penalty
         new_hess_piece <- log_penalty_hess(temp_rho_tilde,barrier_t)
         
         #tack new block of penalty hessian onto existing penalty hessian
         hess_rows <- nrow(lp_hess)
         new_rows <- nrow(new_hess_piece)
-        new_hess_piece <- cbind(matrix(0,nrow = new_rows,
+        new_hess_piece <- cbind(matrix(0, nrow = new_rows,
                                        ncol = hess_rows),
                                 new_hess_piece)
         lp_hess <- cbind(lp_hess,
-                         matrix(0,nrow = hess_rows,
+                         matrix(0, nrow = hess_rows,
                                 ncol = new_rows))
         lp_hess <- rbind(lp_hess,new_hess_piece)
       }
@@ -254,27 +254,27 @@ deriv_criterion_lr <- function(W,
   #alpha_tilde stored *after* rho, rho_tilde in df -- have to tack on
   #zeroes for it
   n_alpha_tilde <- sum(varying_lr_df$param=="alpha_tilde")
-  if(n_alpha_tilde>0){
-    if(include_log_penalty_derivatives){
+  if (n_alpha_tilde>0) {
+    if (include_log_penalty_derivatives) {
       lp_grad <- c(lp_grad,
-                   rep(0,n_alpha_tilde))}
+                   rep(0, n_alpha_tilde))}
     
-    if(return_info){
+    if (return_info) {
       
-      lp_hess <- cbind(lp_hess,matrix(0,ncol = n_alpha_tilde,
+      lp_hess <- cbind(lp_hess,matrix(0, ncol = n_alpha_tilde,
                                       nrow = nrow(lp_hess)))
       
-      lp_hess <- rbind(lp_hess,matrix(0,nrow = n_alpha_tilde,
+      lp_hess <- rbind(lp_hess,matrix(0, nrow = n_alpha_tilde,
                                       ncol = ncol(lp_hess)))
     }
     
   }
-  if(!return_info){
+  if (!return_info) {
     crit_info <- NULL
     lp_hess <- NULL
   }
   
-  if(!include_log_penalty_derivatives){
+  if (!include_log_penalty_derivatives) {
     return(list("grad" = crit_grad,
                 "info" = crit_info))
   } else{
