@@ -76,7 +76,14 @@ multiplied by exp(gamma).}
 
 \item{gamma_tilde}{A numeric vector of length \eqn{\tilde{K}} of starting values for spurious read intensity parameter gamma_tilde}
 
-\item{gamma_tilde_fixed_indices}{A logical vector of length \eqn{\tilde{K}} whose \eqn{i}-th entry is TRUE if the
+\item{gamma_tilde_fixed_indices}{A logical vector of length \eqn{\tilde{K}} whose \eqn{i}-th entry is TRUE if the}
+
+\item{alpha_tilde}{A numeric vector containing starting values of length \eqn{M}. If used,
+\code{Z_tilde_list} must be provided.}
+
+\item{Z_tilde_list}{A list of length \eqn{M + 1} containing matrices \eqn{\tilde{Z}_1,\dots,\tilde{Z}_{M + 1}} to be linearly combined to
+generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}}. If used,
+\code{alpha_tilde} must be provided.
 \eqn{i}-th entry of gamma_tilde should be treated as fixed and known, and FALSE otherwise}
 
 \item{barrier_t}{Starting value of reciprocal barrier penalty coef. Defaults to 1.}
