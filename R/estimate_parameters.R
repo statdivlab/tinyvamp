@@ -27,7 +27,11 @@
 #' @param P_tilde_fixed_indices A \eqn{\tilde{K} \times J} logical matrix indicating if the \eqn{(i,j)}th entry of \code{P_tilde} should be treated as fixed and known.
 #' @param gamma_tilde A numeric vector of length \eqn{\tilde{K}} of starting values for spurious read intensity parameter gamma_tilde
 #' @param gamma_tilde_fixed_indices A logical vector of length \eqn{\tilde{K}} whose \eqn{i}-th entry is TRUE if the
-#' \eqn{i}-th entry of gamma_tilde should be treated as fixed and known, and FALSE otherwise
+#' \eqn{i}-th entry of gamma_tilde should be treated as fixed and known, and FALSE otherwise.
+#' @param alpha_tilde A numeric vector containing starting values of length \eqn{M}. If used, \code{Z_tilde_list} must be provided.
+#' @param Z_tilde_list A list of length \eqn{M + 1} containing matrices \eqn{\tilde{Z}_1,\dots,\tilde{Z}_{M + 1}} to be linearly combined to 
+#' generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}}. If used,
+#' \code{alpha_tilde} must be provided.
 #' @param barrier_t Starting value of reciprocal barrier penalty coef. Defaults to 1.
 #' @param barrier_scale Increments for value of barrier penalty. Defaults to 10.
 #' @param max_barrier Maximum value of barrier_t. Defaults to 1e12.
@@ -41,7 +45,7 @@
 #' @param bootstrap_failure_cutoff Defaults to NULL.
 #' @param return_variance Defaults to FALSE.
 #' 
-#' @return A list containing TODO
+#' @return A list containing estimated parameter values, along with the given inputs
 #' 
 #' @author David Clausen
 #'
@@ -382,7 +386,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
                              fixed_df$k ==k]))
   
   # message('Allegedly, we have calculated fixed_P_tilde_multipliers. Here they are:')
-  # print(fixed_P_tilde_multipliers)
+  # message(fixed_P_tilde_multipliers)
   
   # message("stored K, K_tilde, calculated multipliers")
   
@@ -467,7 +471,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
   }
   
   
-  # print(crit_value)
+  # message(crit_value)
   
   
   
@@ -628,12 +632,12 @@ alpha_tilde and matrices in Z_tilde_list.)")
         ################################
         
         stepsize <- stepsize/2
-        # print(stepsize)
+        # message(stepsize)
         
       }
       
       if(stepsize<1e-5){
-        print("small step size; increasing hessian regularization")
+        message("small step size; increasing hessian regularization")
         hessian_regularization <- hessian_regularization*2
       } else{
         hessian_regularization <- max(hessian_regularization/2,
@@ -651,13 +655,14 @@ alpha_tilde and matrices in Z_tilde_list.)")
       barrier_counter <- barrier_counter + 1
       
       if(verbose){
-        print(crit_value)
-        print(sqrt(sum(derivs$grad^2)))}
+        message(paste("Critical value is", crit_value))
+        message(paste("Sum of squared gradients is ", sqrt(sum(derivs$grad^2))))
+      }
       
     }
     
     if(verbose){message(paste("Fit barrier sub-problem with t = ",
-                              barrier_t,".", sep = "", collapse = ""))}
+                              barrier_t, ".", sep = "", collapse = ""))}
     
     barrier_t <- barrier_t*barrier_scale
     newton_counter <- newton_counter + 1
@@ -739,7 +744,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
     P_grad[] <- 100
     
     # if(verbose){
-    #   print("About to profile")
+    #   message("About to profile")
     # }
     profile_counter <- 1
     if(length(which_k_p)>0){
@@ -837,7 +842,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
           ###
           
           temp_crit_value <- temp_fn(  temp_dfs$varying$value)
-          # print(temp_crit_value)
+          # message(temp_crit_value)
           
           
           temp_params <- dataframes_to_parameters(fixed_df = temp_dfs$fixed,
@@ -849,7 +854,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
           
           temp_P_fixed_indices[k,] <- TRUE
           
-          # print(k)
+          # message(k)
           
         }
         old_crit_value <- crit_value
@@ -859,7 +864,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
     }
     
     # if(verbose){
-    #   print("Done profiling")
+    #   message("Done profiling")
     # }
   }
   
