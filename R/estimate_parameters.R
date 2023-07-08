@@ -39,10 +39,12 @@
 #' @param hessian_regularization The second step of optimization involves a quadratic approximation to the likelihood, for which we use a modified Taylor series for stability. This is the constant that dampens the second term. Defaults to 0.01. 
 #' @param criterion Should the algorithm return the Poisson maximum likelihood estimates or the reweighted Poisson maximum likelihood estimates? Options are "Poisson" or "reweighted_Poisson". 
 #' @param profile_P Defaults to TRUE Run profiling step after barrier algorithm has run? If TRUE, this step is performed, possibly setting some estimated relative abundances in P equal to zero. If FALSE, profiling step is skipped and back-transformed log-ratio parameter estimated via barrier algorithm is returned for P.
+#' @param barrier_maxit The maximum number of iterations for the barrier method
 #' @param profiling_maxit Maximum number of iterations to run profiling step in P for (default is 25).
 #' @param wts Weights for reweighting the likelihood contributions. This is usually done to improve efficiency. Defaults to NULL. We compute the weights for you even if you choose \code{criterion = "reweighted_Poisson"}. 
 #' @param verbose Do you want to know what I'm doing? Defaults to FALSE. 
 #' @param bootstrap_failure_cutoff Defaults to NULL.
+#' @param tinker_zeroes Because the barrier method can only be applied to relative abundances in the interior of the simplex, tinker_zeroes divided by the number of taxa is added to all relative abundances to be estimated before the barrier method is applied. Default 0.1.
 #' @param return_variance Defaults to FALSE.
 #' 
 #' @return A list containing estimated parameter values, along with the given inputs
@@ -84,6 +86,7 @@ estimate_parameters <- function(W,
                                 wts = NULL,
                                 verbose = FALSE,
                                 bootstrap_failure_cutoff = NULL,
+                                tinker_zeroes = 0.1, 
                                 return_variance = FALSE
 ){
   
@@ -97,20 +100,22 @@ estimate_parameters <- function(W,
   J <- ncol(W)
   
   ### add small amount to all estimated relative abundances to avoid zeroes
-  P[!P_fixed_indices] <- P[!P_fixed_indices] + 0.1/J
+  P[!P_fixed_indices] <- P[!P_fixed_indices] + tinker_zeroes/J
   P_tilde[!P_tilde_fixed_indices] <-
-    P_tilde[!P_tilde_fixed_indices] + 0.1/J
+    P_tilde[!P_tilde_fixed_indices] + tinker_zeroes/J
   
   min_regularization <- hessian_regularization
   
   
   if(sum(P[!P_fixed_indices] == 0)>0){
-    P[!P_fixed_indices] <- P[!P_fixed_indices] + 0.01/J
+    if(verbose) {message("huh, Amy isn't sure why this line gets hit...")}
+    P[!P_fixed_indices] <- P[!P_fixed_indices] + (tinker_zeroes/10)/J
   }
   
   if(sum(P_tilde[!P_tilde_fixed_indices]==0)>0){
+    if(verbose) {message("huh, Amy isn't sure why this line gets hit...")}
     P_tilde[!P_tilde_fixed_indices] <-
-      P_tilde[!P_tilde_fixed_indices] + 0.01/J
+      P_tilde[!P_tilde_fixed_indices] + (tinker_zeroes/10)/J
   }
   
   #mi initial alpha_tilde, Z_tilde, Z_tilde_list checks
@@ -169,7 +174,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
                           hessian_regularization = hessian_regularization,
                           criterion = "Poisson",
                           profile_P = FALSE,
-                          profiling_maxit = 25,
+                          profiling_maxit = profiling_maxit,
                           wts = wts)
     
     
@@ -219,7 +224,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
                           criterion = "Poisson",
                           verbose = verbose,
                           profile_P = TRUE,
-                          profiling_maxit = 25,
+                          profiling_maxit = profiling_maxit,
                           wts = wts)
     
     poisson_fit_params <- dataframes_to_parameters(fixed = poisson_fit$fixed,
@@ -338,6 +343,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
   
   #determine number of barrier steps to take
   nsteps <- ceiling(log(max_barrier/barrier_t)/log(barrier_scale)) + 1
+  stopifnot(nsteps >= 1)
   
   #determine sequence of convergence tolerances
   tolerances <- exp(seq(log(initial_conv_tol),log(final_conv_tol), length.out = nsteps))
@@ -446,7 +452,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
   npar <- nrow(varying_lr_df)
   
   # iterate until some criterion is met
-  if(verbose){message("evaluating criterion")}
+  if(verbose){message("Evaluating criterion...")}
   crit_value <- evaluate_criterion_lr(
     W = W,
     X = X,
@@ -470,11 +476,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
     curr_gmm_inv_wts <- NULL
   }
   
-  
   # message(crit_value)
-  
-  
-  
   
   newton_counter <- 1
   barrier_counter <- 1
@@ -561,7 +563,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
         hessian_regularization*
         sqrt(sum(derivs$grad[which_rho|which_rho_tilde]^2))
       
-      if(verbose){message("calculating step direction")}
+      if(verbose){message("Calculating step direction...")}
       
       
       step_direction <- qr.solve(derivs$info  +
@@ -655,8 +657,8 @@ alpha_tilde and matrices in Z_tilde_list.)")
       barrier_counter <- barrier_counter + 1
       
       if(verbose){
-        message(paste("Critical value is", crit_value))
-        message(paste("Sum of squared gradients is ", sqrt(sum(derivs$grad^2))))
+        message(paste("  Critical value is", crit_value))
+        message(paste("  Sum of squared gradients is ", sqrt(sum(derivs$grad^2))))
       }
       
     }
@@ -705,9 +707,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
   
   if(profile_P){
     
-    
-    
-    
+    if(verbose){message("Beginning profiling...")}
     
     P_grad <- numeric(sum(varying_df$param=="P"))
     

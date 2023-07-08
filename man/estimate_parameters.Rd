@@ -37,6 +37,7 @@ estimate_parameters(
   wts = NULL,
   verbose = FALSE,
   bootstrap_failure_cutoff = NULL,
+  tinker_zeroes = 0.1,
   return_variance = FALSE
 )
 }
@@ -99,6 +100,8 @@ generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(
 
 \item{profile_P}{Defaults to TRUE Run profiling step after barrier algorithm has run? If TRUE, this step is performed, possibly setting some estimated relative abundances in P equal to zero. If FALSE, profiling step is skipped and back-transformed log-ratio parameter estimated via barrier algorithm is returned for P.}
 
+\item{barrier_maxit}{The maximum number of iterations for the barrier method}
+
 \item{profiling_maxit}{Maximum number of iterations to run profiling step in P for (default is 25).}
 
 \item{wts}{Weights for reweighting the likelihood contributions. This is usually done to improve efficiency. Defaults to NULL. We compute the weights for you even if you choose \code{criterion = "reweighted_Poisson"}.}
@@ -106,6 +109,8 @@ generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(
 \item{verbose}{Do you want to know what I'm doing? Defaults to FALSE.}
 
 \item{bootstrap_failure_cutoff}{Defaults to NULL.}
+
+\item{tinker_zeroes}{Because the barrier method can only be applied to relative abundances in the interior of the simplex, tinker_zeroes divided by the number of taxa is added to all relative abundances to be estimated before the barrier method is applied. Default 0.1.}
 
 \item{return_variance}{Defaults to FALSE.}
 }

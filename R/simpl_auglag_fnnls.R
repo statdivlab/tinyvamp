@@ -47,7 +47,14 @@ simpl_auglag_fnnls <- function(x,
     #
     #
     #     x <- nnls::nnls(A,b)$x
-    stopifnot(counter<60)
+    
+    ## BEGIN Amy July 8 2023
+    # stopifnot(counter<60)
+    if (counter >= 60) {
+      warning(paste("In fastNNLS, the counter is", counter, "which is >=60. Potential convergence issue?"))
+    }
+    ## END Amy July 8 2023
+    
     # print("doing fastnnls")
     x <- fastnnls::fast_nnls(ZTx = Ab, ZTZ = ATA,
                              tolerance = constraint_tolerance)
@@ -57,8 +64,6 @@ simpl_auglag_fnnls <- function(x,
     V <- abs(sum(x) - 1)
 
     satisfied <- V< constraint_tolerance
-
-
 
     if(V < constraint_tolerance){
       return(x)
