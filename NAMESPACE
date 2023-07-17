@@ -2,7 +2,9 @@
 
 export(bootstrap_ci)
 export(bootstrap_lrt)
+export(calculate_criterion_lr)
 export(estimate_parameters)
+export(evaluate_criterion_lr)
 import(cir)
 import(fastnnls)
 import(logsum)
