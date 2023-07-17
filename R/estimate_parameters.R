@@ -749,7 +749,7 @@ alpha_tilde and matrices in Z_tilde_list.)")
     profile_counter <- 1
     if(length(which_k_p)>0){
       while((old_crit_value - crit_value > 1e-4)&(profile_counter <= profiling_maxit)){
-        
+        if(verbose){message(paste("  Profiling counter", profile_counter))}
         
         for(k in which_k_p){
           temp_P_fixed_indices[k,] <- FALSE

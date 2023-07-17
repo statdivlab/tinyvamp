@@ -1,4 +1,6 @@
-##################### Criterion Evaluation Function #####################
+#' Criterion Evaluation Function 
+#' 
+#' @export
 evaluate_criterion_lr <- function(W,
                                   X,
                                   Z,
