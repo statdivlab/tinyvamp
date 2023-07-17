@@ -50,6 +50,7 @@
 #' @return A list containing estimated parameter values, along with the given inputs
 #' 
 #' @author David Clausen
+#' @author Amy Willis 
 #'
 #' @import cir
 #'

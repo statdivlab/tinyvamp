@@ -1,6 +1,6 @@
 Package: tinyvamp
 Title: Modeling complex measurement error in microbiome experiments
-Version: 0.0.5.0
+Version: 0.0.6.0
 Authors@R: as.person(c(
     "David Clausen <dsc24@uw.edu> [aut, cre]",
     "Amy Willis [aut]"
