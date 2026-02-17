@@ -67,10 +67,7 @@ params <- dataframes_to_parameters(param_dfs$fixed,
   direct_comp <- cbind(diag(means)[,1:7],means)
   colnames(direct_comp) <- NULL
 
-
-
-  expect_equal(as.matrix(function_output),
-               direct_comp)
+  expect_equal(max(abs(as.matrix(function_output) -  direct_comp)), 0) 
 
 })
 

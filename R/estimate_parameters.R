@@ -108,12 +108,12 @@ estimate_parameters <- function(W,
   min_regularization <- hessian_regularization
   
   
-  if(sum(P[!P_fixed_indices] == 0)>0){
+  if(sum(P[!P_fixed_indices] == 0) > 0){
     if(verbose) {message("huh, Amy isn't sure why this line gets hit...")}
     P[!P_fixed_indices] <- P[!P_fixed_indices] + (tinker_zeroes/10)/J
   }
   
-  if(sum(P_tilde[!P_tilde_fixed_indices]==0)>0){
+  if(sum(P_tilde[!P_tilde_fixed_indices] == 0) > 0){
     if(verbose) {message("huh, Amy isn't sure why this line gets hit...")}
     P_tilde[!P_tilde_fixed_indices] <-
       P_tilde[!P_tilde_fixed_indices] + (tinker_zeroes/10)/J
@@ -264,12 +264,12 @@ alpha_tilde and matrices in Z_tilde_list.)")
     
     ## TODO confirm this works as intended
     
-    pre_wts <- tryCatch(cir::cirPAVA(y = squerror_long, 
-                                     x = means_long, 
-                                     wt= wts), 
-                        # cir::cirPAVA(y = squerror_long[order(means_long)], 
-                        #              x = means_long[order(means_long)], 
-                        #              wt= wts[order(means_long)])[rank(means_long)], 
+    pre_wts <- tryCatch(#cir::cirPAVA(y = squerror_long,
+                                     # x = means_long,
+                                     # wt= wts),
+                        cir::cirPAVA(y = squerror_long[order(means_long)],
+                                     x = means_long[order(means_long)],
+                                     wt= wts[order(means_long)])[rank(means_long)],
                         error = function(c) { 
                           if (verbose) 
                             message("Fitted means are the same, breaking cirPAVA...\nNot to worry! Jitter and refit...\n")
@@ -282,16 +282,18 @@ alpha_tilde and matrices in Z_tilde_list.)")
       # suspected bug in cir package otherwise causes errors at least
       # some of the time
       means_long <- means_long + runif(length(means_long),0,1e-8)
-      pre_wts <- try(cir::cirPAVA(y = squerror_long, x = means_long,
-                                  wt= wts))
+      # pre_wts <- try(cir::cirPAVA(y = squerror_long, 
+      #                             x = means_long,
+      #                             wt= wts))
+      
+      pre_wts <- try(cir::cirPAVA(y = squerror_long[order(means_long)], 
+                                  x = means_long[order(means_long)],
+                                  wt= wts[order(means_long)])[rank(means_long)])
       
       if(inherits(pre_wts,"try-error")){
         stop("Fatal error in cirPAVA")
       }
     }
-    
-    
-    
     
     inv_wts <- numeric(length(W_long))
     inv_wts[order(means_long)] <- pre_wts +1
