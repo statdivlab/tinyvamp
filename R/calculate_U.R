@@ -119,7 +119,7 @@ calculate_U <- function(W,
   full_profile_gammas <- log(apply(W_test,1,sum)) -
     log(apply(full_starter_means,1,sum))
   
-  null_starter_means <- meaninate(gamma = rep(0, sum(!training_indicator)),
+  null_starter_means <- meaninate(gammas = rep(0, sum(!training_indicator)),
                                   B = null_training$B,
                                   X =
                                     null_model$X[!training_indicator,,drop = FALSE],

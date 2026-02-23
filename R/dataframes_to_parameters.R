@@ -1,11 +1,11 @@
-
-
 #' Convert parameter values stored in data frame format to matrix format
 #'
 #' @param fixed_df A dataframe containing values of model parameters
 #' treated as fixed and known (i.e. held constant at known values)
+#' 
 #' @param varying_df A dataframe containing current values of model parameters treated
 #' as fixed and unknown (i.e., parameters to be estimated)
+#' 
 #' @return A list containing
 #' \item{P}{Specimen relative abundance matrix (of dimension K x J)}
 #' \item{P_tilde}{Spurious read source
@@ -14,7 +14,9 @@
 #' \item{gammas}{An n-vector of sample-specific read intensities}
 #' \item{gamma_tilde}{A-vector of spurious read source intensities
 #' (of length K-tilde)}
+#' 
 #' @author David Clausen
+#' 
 dataframes_to_parameters <- function(fixed_df,
                                      varying_df){
 

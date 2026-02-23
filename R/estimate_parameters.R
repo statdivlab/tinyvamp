@@ -326,8 +326,8 @@ alpha_tilde and matrices in Z_tilde_list.)")
       poisson_fit$varying$value[
         poisson_fit$varying$param %in% c("P","P_tilde")] + 0.1/J
     
-    poisson_fit_params <- dataframes_to_parameters(fixed = poisson_fit$fixed,
-                                                   varying = poisson_fit$varying)
+    poisson_fit_params <- dataframes_to_parameters(fixed_df = poisson_fit$fixed,
+                                                   varying_df = poisson_fit$varying)
     
     #update values of parameters
     gammas <- poisson_fit_params$gammas

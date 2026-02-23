@@ -1,35 +1,33 @@
-
-
 refit_model <- function(fitted_model,
                         m,
                         seed = NULL,
                         bootstrap_method = "bayesian_subsample",
                         bootstrap_failure_cutoff = -1e4){
-
+  
   n <- nrow(fitted_model$W)
   J <- ncol(fitted_model$W)
-
+  
   if(!is.null(seed)){
     set.seed(seed)
   }
-
-  if(!(boot_method %in% c("bayesian_subsample",
-                        "subsample"))){
-    stop("Argument boot_method must be equal to `bayesian_subsample`
+  
+  if(!(bootstrap_method %in% c("bayesian_subsample",
+                               "subsample"))){
+    stop("Argument bootstrap_method must be equal to `bayesian_subsample`
 or `subsample`.")
   }
-
-if(boot_method == "bayesian_subsample"){
+  
+  if(bootstrap_method == "bayesian_subsample"){
     bootstrap_weights <- rgamma(n_effective,shape = m/n_effective)
     bootstrap_weights <- bootstrap_weights/sum(bootstrap_weights)
-    }
-if(boot_method == "subsample"){
-  bootstrap_weights <- rmultinom(1,m,rep(1/n,n))
-  bootstrap_weights <- bootstrap_weights/sum(bootstrap_weights)
-}
-
+  }
+  if(bootstrap_method == "subsample"){
+    bootstrap_weights <- rmultinom(1,m,rep(1/n,n))
+    bootstrap_weights <- bootstrap_weights/sum(bootstrap_weights)
+  }
+  
   bootstrap_weights <- rep(bootstrap_weights, each = J)
-
+  
   refit <-
     estimate_parameters(W = fitted_model$W,
                         X = fitted_model$X,
@@ -65,7 +63,7 @@ if(boot_method == "subsample"){
                         wts = bootstrap_weights,
                         verbose = FALSE,
                         bootstrap_failure_cutoff = bootstrap_failure_cutoff)
-
+  
   return(list("varying" = refit$varying,
               "objective" = refit$objective))
 }

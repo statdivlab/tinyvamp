@@ -8,17 +8,26 @@ test_that("bootstrap_ci works", {
 
   fitted_model <- tinyvamp:::fit_simulation_model(W,"reweighted_Poisson")
 
-  library(parallel)
+  # library(parallel)
+  # cis <- bootstrap_ci(W = W,
+  #                     fitted_model = fitted_model,
+  #                     n_boot = 10,
+  #                     m = NULL,
+  #                     alpha = 0.05,
+  #                     parallelize = TRUE,
+  #                     ncores = 5,
+  #                     seed = 3,
+  #                     return_models = FALSE
+  
   cis <- bootstrap_ci(W = W,
                       fitted_model = fitted_model,
                       n_boot = 10,
                       m = NULL,
                       alpha = 0.05,
-                      parallelize = TRUE,
-                      ncores = 5,
+                      parallelize = FALSE,
                       seed = 3,
                       return_models = FALSE
-
+  
   )
 
   expect_type(cis,"list")

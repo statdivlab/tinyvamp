@@ -14,7 +14,6 @@ do_one_lrt <- function(W0,
     m <- sqrt(n)
   }
 
-
   if(is.null(boot_weights)){
     stop("Bootstrapping weights boot_weights must be provided.")
   }
