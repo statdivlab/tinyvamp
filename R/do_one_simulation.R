@@ -14,16 +14,15 @@ do_one_simulation <- function(n,
                               verbose = FALSE,
                               return_variance = FALSE){
 
-  # if(load_tinyvamp){
-  #   devtools::load_all()
-  # }
+  if (verbose) {
+    message(paste("n = ",n,sep = "",collapse = ""))
+    message(paste("J = ",J,sep = "",collapse = ""))
+    message(paste("distrib = ",distrib,sep = "",collapse = ""))
+    message(paste("B_multiplier = ", B_multiplier,sep = "",collapse = ""))
+    message(paste("seed = ",seed,sep = "",collapse = ""))
+    message(paste("label = ",label,sep = "",collapse = ""))
+  }
 
-  print(paste("n = ",n,sep = "",collapse = ""))
-  print(paste("J = ",J,sep = "",collapse = ""))
-  print(paste("distrib = ",distrib,sep = "",collapse = ""))
-  print(paste("B_multiplier = ", B_multiplier,sep = "",collapse = ""))
-  print(paste("seed = ",seed,sep = "",collapse = ""))
-  print(paste("label = ",label,sep = "",collapse = ""))
 
   W <- simulate_paper_data(n = n,
                            J = J,
@@ -37,7 +36,7 @@ do_one_simulation <- function(n,
 
   ### Do Bootstrapped LRT for both
 
-  print("Bootstrapping...")
+  if (verbose) message("Bootstrapping...")
   if(is.list(poisson_fit)){
     poisson_null <- poisson_fit
     poisson_null$B[] <- 0

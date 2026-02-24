@@ -23,12 +23,9 @@ simpl_auglag_fnnls <- function(x,
   counter <- 0
   for(k in 1:maxit){
     counter <- counter + 1
-    # print(counter)
 
     ATA <- 0.5*xhess + lambda*diag(rep(1,length(xgrad))) + matrix(mu,nrow = npar, ncol = npar)
 
-
-    # print(npar)
     Ab <- t((-0.5)*(matrix(nu - 2*mu,nrow = 1, ncol = npar) -
                       2*lambda*t(x0) -
                       t(x0)%*%xhess + t(xgrad)))
@@ -55,11 +52,8 @@ simpl_auglag_fnnls <- function(x,
     }
     ## END Amy July 8 2023
     
-    # print("doing fastnnls")
     x <- fastnnls::fast_nnls(ZTx = Ab, ZTZ = ATA,
                              tolerance = constraint_tolerance)
-
-    # print("checking constraints")
 
     V <- abs(sum(x) - 1)
 
@@ -74,13 +68,9 @@ simpl_auglag_fnnls <- function(x,
     } else{
       mu <- 2*mu
     }
-    # print(mu)
-    # print(nu)
     previous_V <- V
 
   }
-
-
 
   warning("Maximum iterations reached; returning initial value")
   return(x0)

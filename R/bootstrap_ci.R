@@ -40,7 +40,8 @@ bootstrap_ci <- function(W,
   
   if(!parallelize){
     for(boot_iter in 1:n_boot){
-      print(boot_iter)
+      
+      if (verbose) message(paste0("Bootstrap iteration ", boot_iter))
       set.seed(boot_seeds[boot_iter])
       boot_weights <- rgamma(n,m/n)
       boot_weights <- boot_weights/sum(boot_weights)

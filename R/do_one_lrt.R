@@ -6,18 +6,19 @@ do_one_lrt <- function(W0,
                        m = NULL,
                        seed = NULL,
                        boot_weights = NULL,
+                       verbose = FALSE,
                        return_models = FALSE){
-
-
+  
+  
   n <- nrow(W0)
   if(is.null(m)){
     m <- sqrt(n)
   }
-
+  
   if(is.null(boot_weights)){
     stop("Bootstrapping weights boot_weights must be provided.")
   }
-
+  
   boot_full <- estimate_parameters(W = W0,
                                    X = full_model$X,
                                    Z = full_model$Z,
@@ -57,17 +58,16 @@ do_one_lrt <- function(W0,
                                    
                                    profile_P = TRUE,
                                    wts = boot_weights,
-                                   verbose = TRUE,
+                                   verbose = verbose,
                                    profiling_maxit = 25)
-
-  print(paste("full model weights sum to "), sum(boot_weights),
-        sep = "", collapse = "")
-
+  
+  if (verbose) message(paste0("full model weights sum to "), sum(boot_weights))
+  
   # if(boot_full$criterion == "reweighted_Poisson"){
   #   null_model$criterion <- "Poisson"
   #   boot_weights <- boot_full$weights
   # }
-
+  
   boot_null <- estimate_parameters(W = W0,
                                    X = null_model$X,
                                    Z = null_model$Z,
@@ -107,23 +107,20 @@ do_one_lrt <- function(W0,
                                    
                                    profile_P = TRUE,
                                    wts = boot_weights,
-                                   verbose = TRUE,
+                                   verbose = verbose,
                                    profiling_maxit = 25)
-
-  print(paste("null model weights sum to "), sum(boot_weights),
-        sep = "", collapse = "")
-
-
-  lr_stat <- 2*(boot_null$objective -
-                                            boot_full$objective)
-
-
+  
+  if (verbose) message(paste0("null model weights sum to "), sum(boot_weights))
+  
+  lr_stat <- 2*(boot_null$objective - boot_full$objective)
+  
+  
   if(!return_models){
-  return(lr_stat)
+    return(lr_stat)
   } else{
-      return(list("lr_stat" = lr_stat,
-                  "full_model" = boot_full_model,
-                  "null_model" = boot_null_model))
-    }
-
+    return(list("lr_stat" = lr_stat,
+                "full_model" = boot_full_model,
+                "null_model" = boot_null_model))
+  }
+  
 }
