@@ -1,4 +1,3 @@
-#' @import fastnnls
 #' 
 #' 
 simpl_auglag_fnnls <- function(x,
@@ -52,7 +51,7 @@ simpl_auglag_fnnls <- function(x,
     }
     ## END Amy July 8 2023
     
-    x <- fastnnls::fast_nnls(ZTx = Ab, ZTZ = ATA,
+    x <- fast_nnls(ZTx = Ab, ZTZ = ATA,
                              tolerance = constraint_tolerance)
 
     V <- abs(sum(x) - 1)

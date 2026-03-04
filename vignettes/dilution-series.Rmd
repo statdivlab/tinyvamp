@@ -25,7 +25,7 @@ In this vignette, we will walk through how to use `tinyvamp` to estimate detecti
 
 ## Setup
 
-We will start by loading the relevant packages. You might need to install `logsum` and `fastnnls` if you haven't already -- you can do this with `remotes::install_github("ailurophilia/logsum")` and `remotes::install_github("ailurophilia/fastnnls")`. Also, `speedyseq` is awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
+We will start by loading the relevant packages. `speedyseq` is awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
 
 ```{r setup}
 library(tidyverse)
