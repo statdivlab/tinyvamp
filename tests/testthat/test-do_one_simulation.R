@@ -1,27 +1,27 @@
 test_that("do_one_simulation returns list of lists", {
   
-  
+  the_n_boot <- 3
   tinysim <- do_one_simulation(n = 1,
                                J = 5,
                                distrib = "NB",
                                B_multiplier = 0,
                                seed = 1,
                                label = "test",
-                               n_boot = 5,
+                               n_boot = the_n_boot,
                                verbose =FALSE,
                                folder_name = "test",
                                return_dont_save = TRUE)
+  expect_equal(length(tinysim$poisson_lrt$boot_lr_stats), the_n_boot)
+  expect_equal(length(tinysim$reweighted_lrt$boot_lr_stats), the_n_boot)
   
-  expect_type(tinysim$poisson_lrt,"list")
-  expect_type(tinysim$poisson_ci,"list")
-  expect_type(tinysim$reweighted_lrt,"list")
-  expect_type(tinysim$reweighted_ci,"list")
+  expect_true("data.frame" %in% class(tinysim$poisson_ci$ci))
+  expect_true("data.frame" %in% class(tinysim$reweighted_ci$ci))
   
 })
 
-test_that("Simulations that previously now succeed.",{
+test_that("Simulations that previously failed now succeed.",{
   
-  skip("This test is slow")
+  skip("This test is very slow")
   
   failing_on_bayes <- do_one_simulation(n = 1,
                                         J = 5,
