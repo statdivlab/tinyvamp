@@ -28,7 +28,8 @@ In this vignette, we will walk through how to use `tinyvamp` to estimate detecti
 We will start by loading the relevant packages. `speedyseq` is awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
 
 ```{r setup}
-library(tidyverse)
+library(dplyr)
+library(tibble)
 library(tinyvamp)
 library(speedyseq)
 ```
