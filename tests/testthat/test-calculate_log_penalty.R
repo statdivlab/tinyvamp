@@ -1,6 +1,4 @@
 test_that("log penalty is correct", {
-  require(logsum)
-
   P <- matrix(1/7,ncol = 7, nrow = 1)
   P_tilde <- matrix(1/7,ncol = 7, nrow = 1)
 

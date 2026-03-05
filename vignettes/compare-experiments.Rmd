@@ -29,7 +29,7 @@ Because of its flexibility, fitting a model using `tinyvamp` involves specifying
 
 ## Setup
 
-We will start by loading the relevant packages. You might need to install `logsum` and `fastnnls` if you haven't already -- you can do this with `remotes::install_github("ailurophilia/logsum")` and `remotes::install_github("ailurophilia/fastnnls")`. 
+We will start by loading the relevant packages. 
 
 ```{r setup}
 library(tidyverse)

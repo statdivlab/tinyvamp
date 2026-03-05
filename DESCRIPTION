@@ -15,8 +15,6 @@ RoxygenNote: 7.3.3
 Depends:
     R (>= 3.5.0),
     cir,
-    fastnnls,
-    logsum,
     numDeriv,
     parallel,
     stats
@@ -26,6 +24,8 @@ Suggests:
     knitr,
     phyloseq,
     rmarkdown,
-    testthat (>= 3.0.0)
+    phyloseq,
+    testthat (>= 3.0.0),
+    tidyverse
 Config/testthat/edition: 3
 VignetteBuilder: knitr

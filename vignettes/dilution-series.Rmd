@@ -25,12 +25,13 @@ In this vignette, we will walk through how to use `tinyvamp` to estimate detecti
 
 ## Setup
 
-We will start by loading the relevant packages. You might need to install `logsum` and `fastnnls` if you haven't already -- you can do this with `remotes::install_github("ailurophilia/logsum")` and `remotes::install_github("ailurophilia/fastnnls")`. Also, `speedyseq` is awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
+We will start by loading the relevant packages. We recommend using `speedyseq` instead of `phyloseq`. It's awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
 
 ```{r setup}
 library(tidyverse)
 library(tinyvamp)
-library(speedyseq)
+library(phyloseq) 
+# library(speedyseq)
 ```
 
 Now let's load the relevant data and inspect it. This data is from [Karstens et al. (2019)](https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org), who generated 9 samples via three-fold dilutions of a synthetic community containing 8 distinct strains of bacteria which each account for 12.5% of the DNA in the community. Despite only 8 strains being present in the synthetic community, 248 total strains were identified using DADA2 (see Section 12.1 of [our paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data processing). 
@@ -49,7 +50,7 @@ karstens_phyloseq %>% sample_data
 We know which genera correspond to taxa in the mock, so let's create a vector telling us which rows of the ASV table contain data on the mock taxa 
 
 ```{r}
-genera_data <- karstens_phyloseq %>% tax_table %>% as_tibble %>% select("Genus") %>% pull
+genera_data <- karstens_phyloseq %>% tax_table %>% as.data.frame %>% as_tibble %>% select("Genus") %>% pull
 Pseudomonas <- genera_data %>% str_detect("Pseudomonas") %>% which
 Escherichia <- genera_data %>% str_detect("Escherichia") %>% which
 Salmonella <- genera_data %>% str_detect("Salmonella") %>% which
@@ -243,7 +244,8 @@ full_karstens_model$varying %>% as_tibble
 Wow, `r full_karstens_model$varying %>% as_tibble %>% nrow` parameters were estimated pretty quickly! That's thanks to *a lot* of hard work and cleverness on David's part. Lets look specifically at the estimated efficiencies, and I will join it to the taxon names data to make it easier to interpret
 
 ```{r, message=FALSE}
-full_karstens_model$varying %>% as_tibble %>% filter(param == "B") %>%
+estd_bs <- full_karstens_model$varying %>% as_tibble %>% dplyr::filter(param == "B")
+estd_bs %>%
   inner_join(tibble(j=241:247, name = genera_data[mock_taxa][-8]), by="j")
 ```
 
