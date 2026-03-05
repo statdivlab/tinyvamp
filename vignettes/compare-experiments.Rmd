@@ -32,8 +32,7 @@ Because of its flexibility, fitting a model using `tinyvamp` involves specifying
 We will start by loading the relevant packages. 
 
 ```{r setup}
-library(dplyr)
-library(tibble)
+library(tidyverse)
 library(tinyvamp)
 ```
 

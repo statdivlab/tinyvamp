@@ -20,11 +20,10 @@ Depends:
 Imports:
     Matrix
 Suggests:
-    dplyr,
     knitr,
     phyloseq,
     rmarkdown,
     testthat (>= 3.0.0),
-    tibble
+    tidyverse
 Config/testthat/edition: 3
 VignetteBuilder: knitr
