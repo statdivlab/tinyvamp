@@ -1,0 +1,27 @@
+# Criterion Evaluation Function
+
+Criterion Evaluation Function
+
+## Usage
+
+``` r
+evaluate_criterion_lr(
+  W,
+  X,
+  Z,
+  Z_tilde,
+  Z_tilde_gamma_cols,
+  Z_tilde_list = NULL,
+  X_tilde,
+  fixed_df,
+  varying_df,
+  varying_lr_df = NULL,
+  barrier_t = NULL,
+  criterion = "Poisson",
+  lr_scale = TRUE,
+  include_log_penalty = TRUE,
+  wts = NULL,
+  gmm_inv_wts = NULL,
+  return_gmm_inv_weights = FALSE
+)
+```
