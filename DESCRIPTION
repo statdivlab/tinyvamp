@@ -23,6 +23,7 @@ Suggests:
     knitr,
     phyloseq,
     rmarkdown,
+    speedyseq,
     testthat (>= 3.0.0),
     tidyverse
 Config/testthat/edition: 3

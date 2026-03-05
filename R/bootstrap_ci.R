@@ -4,6 +4,8 @@
 #' @import parallel
 #' 
 #' 
+#' 
+#' 
 #' @export
 bootstrap_ci <- function(W,
                          fitted_model,

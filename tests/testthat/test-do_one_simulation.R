@@ -8,6 +8,7 @@ test_that("do_one_simulation returns list of lists", {
                                seed = 1,
                                label = "test",
                                n_boot = the_n_boot,
+                               parallelize=FALSE,
                                verbose =FALSE,
                                folder_name = "test",
                                return_dont_save = TRUE)
