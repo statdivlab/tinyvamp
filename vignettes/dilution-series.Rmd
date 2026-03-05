@@ -50,7 +50,7 @@ karstens_phyloseq %>% sample_data
 We know which genera correspond to taxa in the mock, so let's create a vector telling us which rows of the ASV table contain data on the mock taxa 
 
 ```{r}
-genera_data <- karstens_phyloseq %>% tax_table %>% as_tibble %>% select("Genus") %>% pull
+genera_data <- karstens_phyloseq %>% tax_table %>% as.data.frame %>% as_tibble %>% select("Genus") %>% pull
 Pseudomonas <- genera_data %>% str_detect("Pseudomonas") %>% which
 Escherichia <- genera_data %>% str_detect("Escherichia") %>% which
 Salmonella <- genera_data %>% str_detect("Salmonella") %>% which
@@ -244,7 +244,8 @@ full_karstens_model$varying %>% as_tibble
 Wow, `r full_karstens_model$varying %>% as_tibble %>% nrow` parameters were estimated pretty quickly! That's thanks to *a lot* of hard work and cleverness on David's part. Lets look specifically at the estimated efficiencies, and I will join it to the taxon names data to make it easier to interpret
 
 ```{r, message=FALSE}
-full_karstens_model$varying %>% as_tibble %>% filter(param == "B") %>%
+estd_bs <- full_karstens_model$varying %>% as_tibble %>% dplyr::filter(param == "B")
+estd_bs %>%
   inner_join(tibble(j=241:247, name = genera_data[mock_taxa][-8]), by="j")
 ```
 
