@@ -25,12 +25,13 @@ In this vignette, we will walk through how to use `tinyvamp` to estimate detecti
 
 ## Setup
 
-We will start by loading the relevant packages. `speedyseq` is awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
+We will start by loading the relevant packages. We recommend using `speedyseq` instead of `phyloseq`. It's awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
 
 ```{r setup}
 library(tidyverse)
 library(tinyvamp)
-library(speedyseq)
+library(phyloseq) 
+# library(speedyseq)
 ```
 
 Now let's load the relevant data and inspect it. This data is from [Karstens et al. (2019)](https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org), who generated 9 samples via three-fold dilutions of a synthetic community containing 8 distinct strains of bacteria which each account for 12.5% of the DNA in the community. Despite only 8 strains being present in the synthetic community, 248 total strains were identified using DADA2 (see Section 12.1 of [our paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data processing). 
