@@ -4,6 +4,8 @@
 
 - [`bootstrap_ci()`](https://statdivlab.github.io/tinyvamp/reference/bootstrap_ci.md)
   : Apply the Bayesian subsampled bootstrap to a fitted tinyvamp model
+- [`bootstrap_lrt()`](https://statdivlab.github.io/tinyvamp/reference/bootstrap_lrt.md)
+  : Apply a likelihod ratio test
 - [`calculate_log_penalty()`](https://statdivlab.github.io/tinyvamp/reference/calculate_log_penalty.md)
   : Calculate barrier penalty to add to objective function inside
   barrier algorithm
