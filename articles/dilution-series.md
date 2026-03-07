@@ -2,6 +2,8 @@
 
 ## Scope and purpose
 
+TODO state model we want
+
 In this vignette, we will walk through how to use `tinyvamp` to estimate
 detection efficiencies and contamination using dilution series.
 
