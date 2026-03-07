@@ -36,21 +36,22 @@ par_to_jacobian_row <- function(
 
   if (length(which_P_tilde_rows) > 0) {
     for (row_index in 1:length(which_P_tilde_rows)) {
-      P_tilde_jac_row[(row_index - 1) * J + j] <- mu_d_P_tilde(
-        i,
-        j,
-        k_tilde = which_P_tilde_rows[row_index],
-        gammas = params$gammas,
-        B = params$B,
-        X = X,
-        Z = Z,
-        P = params$P,
-        X_tilde = X_tilde,
-        Z_tilde = Z_tilde,
-        Z_tilde_gamma_cols = Z_tilde_gamma_cols,
-        P_tilde = params$P_tilde,
-        gamma_tilde = params$gamma_tilde
-      )
+      stop("we lost mu_d_P_tilde somewhere, and we need it now. Tell Amy.")
+      # P_tilde_jac_row[(row_index - 1) * J + j] <- mu_d_P_tilde(
+      #   i,
+      #   j,
+      #   k_tilde = which_P_tilde_rows[row_index],
+      #   gammas = params$gammas,
+      #   B = params$B,
+      #   X = X,
+      #   Z = Z,
+      #   P = params$P,
+      #   X_tilde = X_tilde,
+      #   Z_tilde = Z_tilde,
+      #   Z_tilde_gamma_cols = Z_tilde_gamma_cols,
+      #   P_tilde = params$P_tilde,
+      #   gamma_tilde = params$gamma_tilde
+      # )
     }
   }
 

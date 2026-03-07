@@ -111,7 +111,8 @@ evaluate_criterion_lr <- function(
     means_long <- do.call(c, means_long)
 
     if (is.null(gmm_inv_wts)) {
-      inv_wts <- get_gmm_inv_weights(W_long = W_long, means_long = means_long)
+      stop("We lost get_gmm_inv_weights somewhere. Amy can find it if you need it.")
+      # inv_wts <- get_gmm_inv_weights(W_long = W_long, means_long = means_long)
     } else {
       inv_wts <- gmm_inv_wts
     }

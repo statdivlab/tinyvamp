@@ -1,4 +1,5 @@
 #' @inheritParams dataframes_to_parameters
+#' @importFrom methods as
 #'
 #' @author David Clausen
 mean_jac_lr_faster <- function(

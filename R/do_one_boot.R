@@ -6,6 +6,7 @@ do_one_boot <- function(
   boot_weights = NULL
 ) {
   n <- nrow(W)
+  J <- ncol(W)
   if (is.null(m)) {
     m <- sqrt(n)
   }

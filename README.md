@@ -1,28 +1,31 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # tinyvamp
 
 <!-- badges: start -->
 
-<!-- [![R-CMD-check](https://github.com/statdivlab/tinyvamp/workflows/R-CMD-check/badge.svg)](https://github.com/statdivlab/tinyvamp/actions) -->
+[![R-CMD-check](https://github.com/statdivlab/tinyvamp/workflows/R-CMD-check/badge.svg)](https://github.com/statdivlab/tinyvamp/actions) 
 
 [![Coverage
 status](https://codecov.io/gh/statdivlab/tinyvamp/branch/main/graph/badge.svg)](https://codecov.io/github/statdivlab/tinyvamp?branch=main)
 <!-- badges: end -->
 
-`tinyvamp` is a package for estimation and removal of measurement error
-in high-throughput sequencing data.
+`tinyvamp` is a package for estimation and removal of measurement error in high-throughput sequencing data. 
+
+There are many use cases for `tinyvamp`; here are a few:
+- Estimating the detectability of different species using mock communities
+- Comparing experimental protocols (or batches) with respect to how they well they detect different species
+- Estimating "true" relative abundances after adjusting for differential detectability
+- Estimating "true" relative abundances after removing contamination relative abundance profiles
+- Estimating contamination relative abundances 
+
+The online documentation is available [here](https://statdivlab.github.io/tinyvamp). 
 
 Full details on the model and estimation method are available in the
-[preprint](https://arxiv.org/abs/2204.12733).
+[preprint](https://arxiv.org/abs/2204.12733). 
 
-**Documentation and vignettes are under construction - please check back
-soon!**
-
-**Needs something more urgently? File an
+Need something? File an
 [issue](https://github.com/statdivlab/tinyvamp/issues) or [send Amy an
-email](http://statisticaldiversitylab.com/team/amy-willis)!**
+email](http://statisticaldiversitylab.com/team/amy-willis)!
 
 ## Installation
 
@@ -34,17 +37,7 @@ You can install the development version of tinyvamp from
 remotes::install_github("statdivlab/tinyvamp")
 ```
 
-<!-- ## Example -->
-
-<!-- This is a basic example which shows you how to solve a common problem: -->
-
-<!-- ```{r example} -->
-
-<!-- library(tinyvamp) -->
-
-<!-- ## basic example code -->
-
-<!-- ``` -->
+Are you using `tinyvamp`? We'd love to hear about it! 
 
 ## Humans
 
