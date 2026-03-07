@@ -1,7 +1,7 @@
-# Calculate derivative of mu_i with respect to a row of matrix-valued parameter rho_tilde
+# Calculate derivative of mu_i with respect to a row of matrix-valued parameter rho_tilde.
 
 Calculate derivative of mu_i with respect to a row of matrix-valued
-parameter rho_tilde
+parameter rho_tilde.
 
 ## Usage
 
@@ -57,6 +57,11 @@ mu_d_rho_tilde_faster(
   List containing matrices that map back-transformed rho_tilde to
   entries of P_tilde
 
+- fixed_P_tilde_multipliers:
+
+  Numeric vector of row-specific multipliers applied to the derivative
+  of the transformation from \\\tilde{\rho}\\ to \\\tilde{P}\\.
+
 - X_tilde:
 
   The spurious read efficiency design (K_tilde x p)
@@ -83,10 +88,16 @@ mu_d_rho_tilde_faster(
   \exp(\tilde{\alpha}\_m)\tilde{Z}\_{(m + 1)}\\. If used, `alpha_tilde`
   must be provided.
 
-- fixed_P_multipliers:
+- gamma_tilde:
 
-  Numeric vector of length K containing values in (0,1\] equal to 1 -
-  sum(fixed relative abundances in row k of P_tilde)
+  Numeric vector of row-specific intercept terms for the spurious read
+  model.
+
+- proportion_scale:
+
+  Logical. If `FALSE`, return the derivative of \\\mu_i\\ with respect
+  to row `k_tilde` of \\\tilde{\rho}\\. If `TRUE`, return only the
+  derivative with respect to the corresponding row of \\\tilde{P}\\.
 
 ## Value
 

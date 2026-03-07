@@ -28,20 +28,7 @@ We will start by loading the relevant packages.
 
 ``` r
 library(tidyverse)
-#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#> ✔ dplyr     1.2.0     ✔ readr     2.2.0
-#> ✔ forcats   1.0.1     ✔ stringr   1.6.0
-#> ✔ ggplot2   4.0.2     ✔ tibble    3.3.1
-#> ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
-#> ✔ purrr     1.2.1     
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(tinyvamp)
-#> Loading required package: cir
-#> Loading required package: numDeriv
-#> Loading required package: parallel
 ```
 
 Now let’s load the relevant data and inspect it. This dataset contains
@@ -402,68 +389,68 @@ full_reparam  <-
                       verbose = TRUE)
 #> Evaluating criterion...
 #> Calculating step direction...
-#>   Critical value is 59488.6958740501
+#>   Critical value is 59488.6958739971
 #>   Sum of squared gradients is  20759219.2187245
 #> Calculating step direction...
-#>   Critical value is 2714.37060241748
+#>   Critical value is 2714.37060242656
 #>   Sum of squared gradients is  1537213.03209716
 #> Calculating step direction...
-#>   Critical value is 962.779632378656
-#>   Sum of squared gradients is  49019.0031205385
+#>   Critical value is 962.779632393281
+#>   Sum of squared gradients is  49019.0031205343
 #> Calculating step direction...
-#>   Critical value is 518.440570955525
-#>   Sum of squared gradients is  1170.93895450318
+#>   Critical value is 518.44057093839
+#>   Sum of squared gradients is  1170.93895449115
 #> Calculating step direction...
-#>   Critical value is 439.547588578626
-#>   Sum of squared gradients is  334.451820838303
+#>   Critical value is 439.54758854844
+#>   Sum of squared gradients is  334.451820833091
 #> Fit barrier sub-problem with t = 1.
 #> Calculating step direction...
-#>   Critical value is 404.262618865981
-#>   Sum of squared gradients is  63.8567779339158
+#>   Critical value is 404.262618865894
+#>   Sum of squared gradients is  63.8567779345351
 #> Fit barrier sub-problem with t = 10.
 #> Calculating step direction...
-#>   Critical value is 398.535007077449
-#>   Sum of squared gradients is  5.30566317182699
+#>   Critical value is 398.535007137036
+#>   Sum of squared gradients is  5.30566317153999
 #> Fit barrier sub-problem with t = 100.
 #> Calculating step direction...
 #>   Critical value is 397.933004080956
-#>   Sum of squared gradients is  0.964654574328363
+#>   Sum of squared gradients is  0.964654574961485
 #> Fit barrier sub-problem with t = 1000.
 #> Calculating step direction...
 #>   Critical value is 397.903481699148
-#>   Sum of squared gradients is  0.130878832620995
+#>   Sum of squared gradients is  0.130878832614764
 #> Fit barrier sub-problem with t = 10000.
 #> Calculating step direction...
-#>   Critical value is 397.901192595268
-#>   Sum of squared gradients is  0.00282837980326623
+#>   Critical value is 397.901192550565
+#>   Sum of squared gradients is  0.00282837980295736
 #> Fit barrier sub-problem with t = 1e+05.
 #> Calculating step direction...
 #>   Critical value is 397.90096349744
-#>   Sum of squared gradients is  1.83712763217375e-05
+#>   Sum of squared gradients is  1.83612109646989e-05
 #> Fit barrier sub-problem with t = 1e+06.
 #> Calculating step direction...
 #>   Critical value is 397.90094058058
-#>   Sum of squared gradients is  2.00871616169818e-06
+#>   Sum of squared gradients is  2.00871611789907e-06
 #> Fit barrier sub-problem with t = 1e+07.
 #> Calculating step direction...
 #>   Critical value is 397.900938584682
-#>   Sum of squared gradients is  1.21879871093009e-06
+#>   Sum of squared gradients is  1.21879871226826e-06
 #> Fit barrier sub-problem with t = 1e+08.
 #> Calculating step direction...
-#>   Critical value is 397.900937789791
-#>   Sum of squared gradients is  1.08520367728683e-06
+#>   Critical value is 397.900937759988
+#>   Sum of squared gradients is  1.08520367768346e-06
 #> Fit barrier sub-problem with t = 1e+09.
 #> Calculating step direction...
-#>   Critical value is 397.900937766926
-#>   Sum of squared gradients is  9.37277655574636e-07
+#>   Critical value is 397.900937737123
+#>   Sum of squared gradients is  9.6773994367296e-07
 #> Fit barrier sub-problem with t = 1e+10.
 #> Calculating step direction...
-#>   Critical value is 397.900937764639
-#>   Sum of squared gradients is  9.37278815971218e-07
+#>   Critical value is 397.900937734837
+#>   Sum of squared gradients is  9.67741313499729e-07
 #> Fit barrier sub-problem with t = 1e+11.
 #> Calculating step direction...
-#>   Critical value is 397.900937764411
-#>   Sum of squared gradients is  9.37278933831892e-07
+#>   Critical value is 397.900937734608
+#>   Sum of squared gradients is  9.67741452245802e-07
 #> Fit barrier sub-problem with t = 1e+12.
 # 
 # full_cis <- bootstrap_ci(W,

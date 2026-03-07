@@ -57,7 +57,7 @@ evaluate_criterion_lr(
 - Z_tilde_list:
 
   Optional list-form representation of `Z_tilde` or related auxiliary
-  structures used by `meaninate()`.
+  structures.
 
 - X_tilde:
 
@@ -99,12 +99,12 @@ evaluate_criterion_lr(
 
 - wts:
 
-  Optional numeric weights passed to `poisson_criterion()`.
+  Optional numeric weights
 
 - gmm_inv_wts:
 
   Optional inverse weighting matrix or vector for the GMM criterion. If
-  `NULL`, it is estimated internally using `get_gmm_inv_weights()`.
+  `NULL`, it is estimated internally
 
 - return_gmm_inv_weights:
 

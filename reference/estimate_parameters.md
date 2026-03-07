@@ -168,7 +168,8 @@ estimate_parameters(
 
   The tolerance for the augmented Lagrangian algorithm. Final estimates
   of P are relative abundances to within `constraint_tolerance` of 1,
-  i.e., abs(sum p_kj - 1) \< `constraint_tolerance`. Defaults to 1e-10.
+  i.e., \\abs(sum p\_{kj} - 1) \<\\ `constraint_tolerance`. Defaults to
+  1e-10.
 
 - hessian_regularization:
 
