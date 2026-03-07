@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tinyvamp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@ and David S Clausen</h4>
 <div class="section level2">
 <h2 id="scope-and-purpose">Scope and purpose<a class="anchor" aria-label="anchor" href="#scope-and-purpose"></a>
 </h2>
+<p>TODO clarify model and interpretation of beta</p>
 <p>In this vignette, we will walk through how to use
 <code>tinyvamp</code> to estimate and compare detection efficiencies
 across batches or experiments. We will consider the Phase 2 data of
@@ -97,8 +98,10 @@ therein for those details!</p>
 <p>We will start by loading the relevant packages.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/statdivlab/tinyvamp" class="external-link">tinyvamp</a></span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># library(tinyvamp)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="va">filter</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span></span></code></pre></div>
 <p>Now let’s load the relevant data and inspect it. This dataset
 contains the MetaPhlAn2-estimated relative abundances of taxa in 29
@@ -170,8 +173,8 @@ that we will be modeling with <code>tinyvamp</code>:</p>
 <span>  <span class="va">as.matrix</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="va">t</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">species_by_sample</span><span class="op">$</span><span class="va">Taxon</span></span></code></pre></div>
-<p>Because it’s a matrix, typing <code>W</code> will spew out a bunch of
-numbers – but feel free to check it out in an interactive
+<p>Because it’s a matrix, printing <code>W</code> will display the full
+observation matrix. Feel free to check it out in an interactive
 environment!</p>
 </div>
 <div class="section level2">
@@ -209,7 +212,7 @@ across datasets):</p>
 <p>There are lots of different ways we could set up our comparisons
 between protocols. For example, we could estimate detection efficiencies
 with respect to the flow cytometry measurements. That is, we could
-estimate detection effects for protocol H vs flow cytometry; protocol W
+estimate detection effects for protocol H vs flow cytometry; protocol Q
 vs flow cytometry; protocol W vs flow cytometry (of course, we would get
 a different estimate of the detection effects for each taxon). Here’s
 how we could create that matrix:</p>
@@ -220,7 +223,6 @@ how we could create that matrix:</p>
 <span>         ww <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">Protocol</span> <span class="op">==</span> <span class="st">"W"</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Protocol</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">hh</span>, <span class="va">qq</span>, <span class="va">ww</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># convert to numeric matrix required by tinyvamp</span></span></code></pre></div>
-<p>TODO(AW) can we remove the as.matrix?</p>
 <p>However, we are interested in assessing the evidence against
 detection efficiencies being the same between protocols H, Q and W. To
 make our lives easy for testing this hypothesis later, we’re going to
@@ -243,7 +245,7 @@ matrix.</p>
 <p>By parameterizing the model this way, we can test whether detection
 efficiencies being the same between protocols H, Q and W by testing the
 hypothesis
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mi>Q</mi></msub><mo>=</mo><msub><mi>β</mi><mi>W</mi></msub><mo>=</mo><mn>𝟎</mn></mrow><annotation encoding="application/x-tex">\beta_{Q} = \beta_{W} = \mathbf{0}</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mi>Q</mi><mo>⋅</mo></mrow></msub><mo>=</mo><msub><mi>β</mi><mrow><mi>W</mi><mo>⋅</mo></mrow></msub><mo>=</mo><mn>𝟎</mn></mrow><annotation encoding="application/x-tex">\beta_{Q\cdot} = \beta_{W\cdot} = \mathbf{0}</annotation></semantics></math>.
 (This may be clarified below – so if you’re confused, dear reader, read
 on!)</p>
 <p>Since
@@ -257,7 +259,8 @@ and tell the model what we know about
 Let initialize the estimation algorithm at “all taxa have the same
 detection efficiencies under all protocols”:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, ncol <span class="op">=</span> <span class="fl">10</span>, nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">J</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span> <span class="co">## here, 10</span></span>
+<span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, ncol <span class="op">=</span> <span class="va">J</span>, nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <p>(Remember that there are 10 taxa and 3 protocol variables: Intercept,
 Protocol Q and Protocol W)</p>
 <p>What do we know about
@@ -266,8 +269,8 @@ Nothing, right? Well, almost. We always need to choose which taxon we’re
 comparing our efficiencies against. Let’s choose the last taxon,
 <em>Yersinia pseudotuberculosis</em>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">B_fixed_indices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">FALSE</span>, ncol <span class="op">=</span> <span class="fl">10</span>,nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="va">B_fixed_indices</span><span class="op">[</span>,<span class="fl">10</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">B_fixed_indices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">FALSE</span>, ncol <span class="op">=</span> <span class="va">J</span>, nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">B_fixed_indices</span><span class="op">[</span>, <span class="va">J</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
 <p>Under this parametrization and constraints, we interpret</p>
 <ul>
 <li>
@@ -289,7 +292,7 @@ as the degree of multiplicative overdetection of taxon
 relative to <em>Yersinia pseudotuberculosis</em> in protocol W compared
 to protocol H.</li>
 </ul>
-<!-- ```{r} --><!-- protocols <- sapply(rownames(W)[-1], --><!--                     function(x) costea2017_sample_data$Protocol[ --><!--                       costea2017_sample_data$Run_accession == x --><!--                     ]) --><!-- individuals <- sapply(rownames(W)[-1], --><!--                       function(x) costea2017_sample_data$Individual[ --><!--                         costea2017_sample_data$Run_accession == x --><!--                       ]) --><!-- X <- lapply(protocols, --><!--             function(x) as.numeric( --><!--               c(x == "H",x == "Q", x == "W") --><!--             )) --><!-- X <- do.call(rbind,X) --><!-- X[,1] <- 1 --><!-- X <- rbind(0,X) --><!-- X --><!-- ``` --><p>Now let’s move on to set up the sample design matrix, which links
+<p>Now let’s move on to set up the sample design matrix, which links
 samples to specimens.
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐙</mi><annotation encoding="application/x-tex">\mathbf{Z}</annotation></semantics></math>
 is a
@@ -302,7 +305,8 @@ is the number of specimens. Here, there is only one specimen – the
 synthetic community that was spiked-in to every sample. So here’s our
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐙</mi><annotation encoding="application/x-tex">\mathbf{Z}</annotation></semantics></math>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span>, nrow <span class="op">=</span> <span class="fl">30</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">nn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span>, nrow <span class="op">=</span> <span class="va">nn</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>We now need to initialize our relative abundance matrix
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐩</mi><annotation encoding="application/x-tex">\mathbf{p}</annotation></semantics></math>,
 a
@@ -312,8 +316,8 @@ cytometry data, and tell the algorithm that we don’t know any of the
 entries of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐩</mi><annotation encoding="application/x-tex">\mathbf{p}</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">P</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span>,nrow <span class="op">=</span><span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="va">P_fixed_indices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">FALSE</span>,nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">P</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="va">J</span><span class="op">)</span></span>
+<span><span class="va">P_fixed_indices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">FALSE</span>, nrow <span class="op">=</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="va">J</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s tell <code>tinyvamp</code> that we don’t know the sample
 intensities
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛄</mi><annotation encoding="application/x-tex">\mathbf{\gamma}</annotation></semantics></math>,
@@ -364,10 +368,10 @@ like so:</p>
 <span>                                  Z_tilde_list <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="va">full_model</span><span class="op">$</span><span class="va">optimization_status</span></span>
 <span><span class="co">#&gt; [1] "Converged"</span></span></code></pre></div>
-<p>Woohoo, done! Pretty fast considering the number of parameters in
-this model (67). For this analysis we just use the default optimization
-settings, but you can play around with them and learn more through
-<code><a href="../reference/estimate_parameters.html">?estimate_parameters</a></code></p>
+<p>Woohoo, done! The model converges quickly despite the relatively
+large number of parameters (67). For this analysis we just use the
+default optimization settings, but you can play around with them and
+learn more through <code><a href="../reference/estimate_parameters.html">?estimate_parameters</a></code></p>
 <p><code>full_model</code> is a list that contains a bunch of
 information. You can what’s in there with
 <code>full_model %&gt;% names</code>. Let’s dive right in and check out
@@ -388,414 +392,98 @@ some of the estimates:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 0.077<span style="text-decoration: underline;">3</span> P         1     9</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 0.099<span style="text-decoration: underline;">2</span> P         1    10</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 57 more rows</span></span></span></code></pre></div>
+<p>TODO The estimated
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
+coefficients describe multiplicative detection biases relative to the
+reference taxon and protocol. Values larger than one indicate
+over-detection relative to the reference, while values below one
+indicate under-detection.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">beta_est</span> <span class="op">&lt;-</span> <span class="va">full_model</span><span class="op">$</span><span class="va">varying</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">param</span> <span class="op">==</span> <span class="st">"B"</span><span class="op">)</span></span>
-<span><span class="va">beta_est</span></span>
-<span><span class="co">#&gt;           value param k j</span></span>
-<span><span class="co">#&gt; 110 -1.61248573     B 1 1</span></span>
-<span><span class="co">#&gt; 41  -0.17640279     B 1 2</span></span>
-<span><span class="co">#&gt; 71   3.37728585     B 1 3</span></span>
-<span><span class="co">#&gt; 101 -0.18784085     B 1 4</span></span>
-<span><span class="co">#&gt; 13   2.36839888     B 1 5</span></span>
-<span><span class="co">#&gt; 16  -2.62182196     B 1 6</span></span>
-<span><span class="co">#&gt; 19   4.16506177     B 1 7</span></span>
-<span><span class="co">#&gt; 22   2.48598212     B 1 8</span></span>
-<span><span class="co">#&gt; 25   1.53517280     B 1 9</span></span>
-<span><span class="co">#&gt; 28   0.06672387     B 2 1</span></span>
-<span><span class="co">#&gt; 51  -0.38971288     B 2 2</span></span>
-<span><span class="co">#&gt; 81  -0.89829964     B 2 3</span></span>
-<span><span class="co">#&gt; 11   0.17631021     B 2 4</span></span>
-<span><span class="co">#&gt; 14  -2.23142349     B 2 5</span></span>
-<span><span class="co">#&gt; 17   3.34467253     B 2 6</span></span>
-<span><span class="co">#&gt; 20  -0.28219752     B 2 7</span></span>
-<span><span class="co">#&gt; 23   0.25894574     B 2 8</span></span>
-<span><span class="co">#&gt; 26  -0.63032524     B 2 9</span></span>
-<span><span class="co">#&gt; 31   1.53669302     B 3 1</span></span>
-<span><span class="co">#&gt; 61   1.40203711     B 3 2</span></span>
-<span><span class="co">#&gt; 91   0.66859539     B 3 3</span></span>
-<span><span class="co">#&gt; 12   0.09250658     B 3 4</span></span>
-<span><span class="co">#&gt; 15  -0.25670609     B 3 5</span></span>
-<span><span class="co">#&gt; 18   3.22037528     B 3 6</span></span>
-<span><span class="co">#&gt; 21   0.08328595     B 3 7</span></span>
-<span><span class="co">#&gt; 24  -0.00224524     B 3 8</span></span>
-<span><span class="co">#&gt; 27  -0.05501484     B 3 9</span></span>
-<span><span class="co"># beta_df &lt;- as_tibble(beta_est) %&gt;%</span></span>
-<span><span class="co">#   mutate(protocol = c("H vs flow", "Q vs H", "W vs H")) %&gt;%</span></span>
-<span><span class="co">#   pivot_longer(-protocol, names_to = "taxon", values_to = "beta") %&gt;%</span></span>
-<span><span class="co">#   mutate(effect = exp(beta))</span></span>
-<span><span class="co"># </span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">beta_est</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">j</span>, y <span class="op">=</span> <span class="va">value</span>, color <span class="op">=</span> <span class="va">k</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    y <span class="op">=</span> <span class="st">"Multiplicative detection efficiency"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Taxon"</span>,</span>
-<span>    title <span class="op">=</span> <span class="st">"Estimated detection efficiencies by protocol"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="compare-experiments_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
-<p>Now, to test… we need to tell tinyvamp what the null hypothesis is.
-We do this as follows:</p>
+<code class="sourceCode R"><span><span class="va">the_settings</span> <span class="op">&lt;-</span> <span class="va">X</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">as_tibble</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">fitted_detectabilities</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">full_model</span><span class="op">$</span><span class="va">B</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">as_tibble</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if</span></span>
+<span><span class="co">#&gt; `.name_repair` is omitted as of tibble 2.0.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Using compatibility `.name_repair`.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fitted_detectabilities</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="va">the_betahats</span> <span class="op">&lt;-</span> <span class="va">the_settings</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="st">"setting"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">intercept</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"Flow cytometry"</span>,</span>
+<span>                            <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">qq</span> <span class="op">==</span> <span class="fl">0</span> <span class="op">&amp;</span> <span class="va">ww</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"H relative to FC"</span>,</span>
+<span>                                   <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">qq</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">&amp;</span> <span class="va">ww</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"Q relative to FC"</span>,</span>
+<span>                                          <span class="st">"W relative to FC"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, .before <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_cols.html" class="external-link">bind_cols</a></span><span class="op">(</span><span class="va">fitted_detectabilities</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">intercept</span>, <span class="op">-</span><span class="va">qq</span>, <span class="op">-</span><span class="va">ww</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span><span class="op">-</span><span class="va">setting</span><span class="op">)</span></span>
+<span><span class="va">the_betahats</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 40 × 3</span></span></span>
+<span><span class="co">#&gt;    setting        name                        value</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Flow cytometry Blautia_hansenii                0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Flow cytometry Clostridium_difficile           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Flow cytometry Clostridium_perfringens         0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Flow cytometry Clostridium_saccharolyticum     0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Flow cytometry Fusobacterium_nucleatum         0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Flow cytometry Lactobacillus_plantarum         0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Flow cytometry Prevotella_melaninogenica       0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Flow cytometry Salmonella_enterica             0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Flow cytometry Vibrio_cholerae                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Flow cytometry Yersinia_pseudotuberculosis     0</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">the_betahats</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">name</span>, y <span class="op">=</span> <span class="va">value</span>, color <span class="op">=</span> <span class="va">setting</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># geom_hline(yintercept = 1, linetype = "dashed") +</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    y <span class="op">=</span> <span class="st">"Estimated detection efficiency"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">""</span>,</span>
+<span>    <span class="co"># title = "Estimated detection efficiencies by protocol"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, vjust <span class="op">=</span> <span class="fl">1</span>, hjust<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="compare-experiments_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
+<p>Testing whether detection efficiencies are identical across protocols
+H, Q, and W corresponds to the hypothesis
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mi>Q</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>=</mo><msub><mi>β</mi><mrow><mi>W</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta_{Q,j} = \beta_{W,j} = 0</annotation></semantics></math>
+for all
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>J</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">j = 1, \ldots, J-1</annotation></semantics></math>.
+In other words, protocols Q and W don’t differ from protocol H in their
+detectabilities, where the detectabilities are relative to flow
+cytometry.</p>
+<p>To test this hypothesis, we need to tell tinyvamp what the null
+hypothesis is. We do this as follows:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### Create null model specification for test</span></span>
 <span><span class="va">null_param</span> <span class="op">&lt;-</span> <span class="va">full_model</span></span>
 <span><span class="co">### set second and third rows of B equal to zero</span></span>
 <span><span class="va">null_param</span><span class="op">$</span><span class="va">B</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">null_param</span><span class="op">$</span><span class="va">B_fixed_indices</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
-<p>This next step can take ages! Good to parallelize if possible.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># bootstrap_test &lt;-  bootstrap_lrt(W = W,</span></span>
-<span><span class="co">#                                  fitted_model= full_model,</span></span>
-<span><span class="co">#                                  null_param = null_param,</span></span>
-<span><span class="co">#                                  n_boot = 1000,</span></span>
-<span><span class="co">#                                  ncores = 5, </span></span>
-<span><span class="co">#                                  parallelize = TRUE)</span></span></code></pre></div>
-<p>Fit reparametrization with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mi>i</mi></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><msub><mn>1</mn><mi>H</mi></msub><msub><mn>1</mn><mi>Q</mi></msub><msub><mn>1</mn><mi>W</mi></msub><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">X_i = [1_H 1_Q 1_W]</annotation></semantics></math>
-to (more easily) get CIs for protocol-specific effects (also can
-bootstrap from original model, but currently a bit more involved to pull
-out CIs for quantities of form
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A%*%beta</annotation></semantics></math>
-than for beta itself)</p>
+<p>We then refit the model under the null to obtain the sampling
+distribution of the test statistics under the null, and compare the
+observed test statistics to this null distribution. The wall time of
+this step is proportional to <code>n_boot</code>, but can be
+parallelized across your computer’s cores using the package
+<code>parallel</code>. Using only one core, 10 bootstrap iterations took
+less than 35 seconds on my 1.4 GHz Dual-Core Intel Core i7 from 2017.
+So, on a more modern machine using parallelization, even 100 iterations
+should take even less than a minute. Take this minute to stretch your
+neck and hands, or look at a photo of your favourite cat.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X_repar</span> <span class="op">&lt;-</span> <span class="va">X</span></span>
-<span><span class="va">X_repar</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span></span>
-<span><span class="va">full_reparam</span>  <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="../reference/estimate_parameters.html">estimate_parameters</a></span><span class="op">(</span>W <span class="op">=</span> <span class="va">W</span>,</span>
-<span>                      X <span class="op">=</span> <span class="va">X_repar</span>,</span>
-<span>                      Z <span class="op">=</span> <span class="va">Z</span>,</span>
-<span>                      Z_tilde <span class="op">=</span> <span class="va">Z_tilde</span>,</span>
-<span>                      Z_tilde_gamma_cols <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>                      gammas <span class="op">=</span> <span class="va">gammas</span>,</span>
-<span>                      gammas_fixed_indices <span class="op">=</span> <span class="va">gammas_fixed_indices</span>,</span>
-<span>                      P <span class="op">=</span> <span class="va">P</span>,</span>
-<span>                      P_fixed_indices <span class="op">=</span> <span class="va">P_fixed_indices</span>,</span>
-<span>                      B <span class="op">=</span> <span class="va">B</span>,</span>
-<span>                      B_fixed_indices <span class="op">=</span> <span class="va">B_fixed_indices</span>,</span>
-<span>                      X_tilde <span class="op">=</span> <span class="va">X_tilde</span>,</span>
-<span>                      P_tilde <span class="op">=</span> <span class="va">P_tilde</span>,</span>
-<span>                      P_tilde_fixed_indices <span class="op">=</span> <span class="va">P_tilde_fixed_indices</span>,</span>
-<span>                      gamma_tilde <span class="op">=</span> <span class="va">gamma_tilde</span>,</span>
-<span>                      gamma_tilde_fixed_indices <span class="op">=</span> <span class="va">gamma_tilde_fixed_indices</span>,</span>
-<span>                      alpha_tilde <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>                      Z_tilde_list <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>                      barrier_t <span class="op">=</span> <span class="fl">1</span>, <span class="co">#starting value of reciprocal barrier penalty coef.</span></span>
-<span>                      barrier_scale <span class="op">=</span> <span class="fl">10</span>, <span class="co">#increments for value of barrier penalty</span></span>
-<span>                      max_barrier <span class="op">=</span> <span class="fl">1e12</span>, <span class="co">#maximum value of barrier_t</span></span>
-<span>                      initial_conv_tol <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                      final_conv_tol <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>                      constraint_tolerance <span class="op">=</span> <span class="fl">1e-10</span>,</span>
-<span>                      hessian_regularization <span class="op">=</span> <span class="fl">0.01</span>,</span>
-<span>                      criterion <span class="op">=</span> <span class="st">"Poisson"</span>,</span>
-<span>                      profile_P <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>                      profiling_maxit <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>                      wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>                      verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Evaluating criterion...</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 59488.6958740328</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  20759219.2187245</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 2714.37060243887</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  1537213.03209714</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 962.779632347674</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  49019.0031205382</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 518.440570998821</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  1170.93895446302</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 439.547588563884</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  334.451820830091</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 404.262618866065</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  63.8567779332572</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 10.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 398.535007077456</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  5.30566317160845</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 100.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.933004088407</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  0.964654574340931</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1000.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.9034817215</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  0.130878831070015</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 10000.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.901192580367</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  0.00282838743392096</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+05.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900963467638</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  1.8364527831256e-05</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+06.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900940558228</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  2.01537690139673e-06</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+07.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900938614484</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  1.23929818248609e-06</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+08.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900937789791</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  1.05552458380137e-06</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+09.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900937766926</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  9.37277653528867e-07</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+10.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900937764639</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  9.37278813918831e-07</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+11.</span></span>
-<span><span class="co">#&gt; Calculating step direction...</span></span>
-<span><span class="co">#&gt;   Critical value is 397.900937764411</span></span>
-<span><span class="co">#&gt;   Sum of squared gradients is  9.3727893176865e-07</span></span>
-<span><span class="co">#&gt; Fit barrier sub-problem with t = 1e+12.</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cis &lt;- bootstrap_ci(W,</span></span>
-<span><span class="co">#                          fitted_model = full_reparam,</span></span>
-<span><span class="co">#                          n_boot=1000,</span></span>
-<span><span class="co">#                          m = NULL,</span></span>
-<span><span class="co">#                          alpha = 0.05,</span></span>
-<span><span class="co">#                          parallelize = TRUE,</span></span>
-<span><span class="co">#                          ncores = 5,</span></span>
-<span><span class="co">#                          seed = 3423,</span></span>
-<span><span class="co">#                          return_models = FALSE,</span></span>
-<span><span class="co">#                          verbose = FALSE</span></span>
-<span><span class="co">#                          </span></span>
-<span><span class="co"># )</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># taxa &lt;- colnames(W)</span></span>
-<span><span class="co"># taxa &lt;- lapply(taxa,</span></span>
-<span><span class="co">#                function(x) strsplit(x,"_") %&gt;%</span></span>
-<span><span class="co">#                  (function(y) paste(substr(y[[1]][1],1,1),". ",</span></span>
-<span><span class="co">#                                     y[[1]][2],sep = "",collapse = ""))) %&gt;%</span></span>
-<span><span class="co">#   do.call(c,.)</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cis$ci %&gt;%</span></span>
-<span><span class="co">#   filter(param == "B") %&gt;%</span></span>
-<span><span class="co">#   mutate(Protocol = c("H","Q","W")[k],</span></span>
-<span><span class="co">#          Estimate = round(value,2)) %&gt;%</span></span>
-<span><span class="co">#   mutate(Upper = round(upper_ci,2),</span></span>
-<span><span class="co">#          Lower = round(lower_ci,2),</span></span>
-<span><span class="co">#          Taxon = rep(taxa[1:9],3)) %&gt;%</span></span>
-<span><span class="co">#   dplyr::select(Protocol, Taxon, Estimate, Lower, Upper) %&gt;%</span></span>
-<span><span class="co">#   mutate(Estimate = apply(cbind(Estimate,Lower,Upper),</span></span>
-<span><span class="co">#                           1, function(x) paste(x[1]," (", x[2], " - ", x[3], ")",</span></span>
-<span><span class="co">#                                                sep = "",</span></span>
-<span><span class="co">#                                                collapse = ""))) %&gt;%</span></span>
-<span><span class="co">#   select(c(Protocol, Taxon, Estimate)) %&gt;%</span></span>
-<span><span class="co">#   pivot_wider(id_cols = Taxon, names_from = Protocol,</span></span>
-<span><span class="co">#               values_from = Estimate) %&gt;%</span></span>
-<span><span class="co">#   knitr::kable(format = "latex")</span></span>
-<span><span class="co"># </span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="fold-cross-validation">10-fold cross-validation<a class="anchor" aria-label="anchor" href="#fold-cross-validation"></a>
-</h2>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># </span></span>
-<span><span class="co"># # construct folds</span></span>
-<span><span class="co"># folds &lt;- vector(10, mode = "list")</span></span>
-<span><span class="co"># available &lt;- 2:30</span></span>
-<span><span class="co"># unique_individuals &lt;- c(1:8,"M")</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># for(i in 1:9){</span></span>
-<span><span class="co">#   folds[[i]] &lt;- which(individuals == unique_individuals[i]) +1</span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># folds[[10]] &lt;- which(individuals %in% c("A","B")) +1</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cv &lt;- vector(10, mode = "list")</span></span>
-<span><span class="co"># null_cv &lt;- vector(10, mode = "list")</span></span>
-<span><span class="co"># for(whichfoldout in 1:10){</span></span>
-<span><span class="co">#   print(whichfoldout)</span></span>
-<span><span class="co">#   heldout &lt;- folds[[whichfoldout]]</span></span>
-<span><span class="co">#   nheldout &lt;- length(heldout)</span></span>
-<span><span class="co">#   Z_cv &lt;- Z</span></span>
-<span><span class="co">#   Z_cv &lt;- cbind(Z_cv - Z_cv*(1:30 %in% heldout))</span></span>
-<span><span class="co">#   P_cv &lt;- P</span></span>
-<span><span class="co">#   P_fixed_indices_cv &lt;- P_fixed_indices</span></span>
-<span><span class="co">#   for(k in 1:nheldout){</span></span>
-<span><span class="co">#     Z_cv &lt;- cbind(Z_cv,as.numeric(1:30 == heldout[k]))</span></span>
-<span><span class="co">#     P_cv &lt;- rbind(P_cv,P)</span></span>
-<span><span class="co">#     P_fixed_indices_cv &lt;- rbind(P_fixed_indices_cv,</span></span>
-<span><span class="co">#                                 P_fixed_indices)</span></span>
-<span><span class="co">#   }</span></span>
-<span><span class="co">#   </span></span>
-<span><span class="co">#   full_cv[[whichfoldout]]  &lt;-</span></span>
-<span><span class="co">#     estimate_parameters(W = W,</span></span>
-<span><span class="co">#                         X = X,</span></span>
-<span><span class="co">#                         Z = Z_cv,</span></span>
-<span><span class="co">#                         Z_tilde = Z_tilde,</span></span>
-<span><span class="co">#                         Z_tilde_gamma_cols = 1,</span></span>
-<span><span class="co">#                         gammas = gammas,</span></span>
-<span><span class="co">#                         gammas_fixed_indices = gammas_fixed_indices,</span></span>
-<span><span class="co">#                         P = P_cv,</span></span>
-<span><span class="co">#                         P_fixed_indices = P_fixed_indices_cv,</span></span>
-<span><span class="co">#                         B = B,</span></span>
-<span><span class="co">#                         B_fixed_indices = B_fixed_indices,</span></span>
-<span><span class="co">#                         X_tilde = X_tilde,</span></span>
-<span><span class="co">#                         P_tilde = P_tilde,</span></span>
-<span><span class="co">#                         P_tilde_fixed_indices = P_tilde_fixed_indices,</span></span>
-<span><span class="co">#                         gamma_tilde = gamma_tilde,</span></span>
-<span><span class="co">#                         gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,</span></span>
-<span><span class="co">#                         alpha_tilde = NULL,</span></span>
-<span><span class="co">#                         Z_tilde_list = NULL,</span></span>
-<span><span class="co">#                         barrier_t = 1, #starting value of reciprocal barrier penalty coef.</span></span>
-<span><span class="co">#                         barrier_scale = 10, #increments for value of barrier penalty</span></span>
-<span><span class="co">#                         max_barrier = 1e12, #maximum value of barrier_t</span></span>
-<span><span class="co">#                         initial_conv_tol = 1000,</span></span>
-<span><span class="co">#                         final_conv_tol = 0.1,</span></span>
-<span><span class="co">#                         constraint_tolerance = 1e-10,</span></span>
-<span><span class="co">#                         hessian_regularization = 0.01,</span></span>
-<span><span class="co">#                         criterion = "Poisson",</span></span>
-<span><span class="co">#                         profile_P = FALSE,</span></span>
-<span><span class="co">#                         profiling_maxit = 25,</span></span>
-<span><span class="co">#                         wts = NULL,</span></span>
-<span><span class="co">#                         verbose = FALSE)</span></span>
-<span><span class="co">#   </span></span>
-<span><span class="co">#   null_cv[[whichfoldout]]  &lt;-</span></span>
-<span><span class="co">#     estimate_parameters(W = W,</span></span>
-<span><span class="co">#                         X = X[,1,drop = FALSE],</span></span>
-<span><span class="co">#                         Z = Z_cv,</span></span>
-<span><span class="co">#                         Z_tilde = Z_tilde,</span></span>
-<span><span class="co">#                         Z_tilde_gamma_cols = 1,</span></span>
-<span><span class="co">#                         gammas = gammas,</span></span>
-<span><span class="co">#                         gammas_fixed_indices = gammas_fixed_indices,</span></span>
-<span><span class="co">#                         P = P_cv,</span></span>
-<span><span class="co">#                         P_fixed_indices = P_fixed_indices_cv,</span></span>
-<span><span class="co">#                         B = B[1,,drop = FALSE],</span></span>
-<span><span class="co">#                         B_fixed_indices = B_fixed_indices[1,,drop = FALSE],</span></span>
-<span><span class="co">#                         X_tilde = X_tilde[,1,drop = FALSE],</span></span>
-<span><span class="co">#                         P_tilde = P_tilde,</span></span>
-<span><span class="co">#                         P_tilde_fixed_indices = P_tilde_fixed_indices,</span></span>
-<span><span class="co">#                         gamma_tilde = gamma_tilde,</span></span>
-<span><span class="co">#                         gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,</span></span>
-<span><span class="co">#                         alpha_tilde = NULL,</span></span>
-<span><span class="co">#                         Z_tilde_list = NULL,</span></span>
-<span><span class="co">#                         barrier_t = 1, #starting value of reciprocal barrier penalty coef.</span></span>
-<span><span class="co">#                         barrier_scale = 10, #increments for value of barrier penalty</span></span>
-<span><span class="co">#                         max_barrier = 1e12, #maximum value of barrier_t</span></span>
-<span><span class="co">#                         initial_conv_tol = 1000,</span></span>
-<span><span class="co">#                         final_conv_tol = 0.1,</span></span>
-<span><span class="co">#                         constraint_tolerance = 1e-10,</span></span>
-<span><span class="co">#                         hessian_regularization = 0.01,</span></span>
-<span><span class="co">#                         criterion = "Poisson",</span></span>
-<span><span class="co">#                         profile_P = FALSE,</span></span>
-<span><span class="co">#                         profiling_maxit = 25,</span></span>
-<span><span class="co">#                         wts = NULL,</span></span>
-<span><span class="co">#                         verbose = FALSE)</span></span>
-<span><span class="co">#   </span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cv_predictions &lt;- lapply(1:10,</span></span>
-<span><span class="co">#                               function(x)</span></span>
-<span><span class="co">#                                 full_cv[[x]]$varying[</span></span>
-<span><span class="co">#                                   full_cv[[x]]$varying$param == "P"&amp;</span></span>
-<span><span class="co">#                                     full_cv[[x]]$varying$k&gt;1,])</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># for(i in 1:10){</span></span>
-<span><span class="co">#   full_cv_predictions[[i]]$k &lt;- sapply(full_cv_predictions[[i]]$k,</span></span>
-<span><span class="co">#                                        function(x) folds[[i]][x - 1])</span></span>
-<span><span class="co">#   </span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cv_predictions &lt;- do.call(rbind,full_cv_predictions)</span></span>
-<span><span class="co"># fc_values &lt;- W[1,]/sum(W[1,])</span></span>
-<span><span class="co"># full_cv_predictions$fc_value &lt;- sapply(full_cv_predictions$j,</span></span>
-<span><span class="co">#                                        function(d) fc_values[d])</span></span>
-<span><span class="co"># full_cv_predictions$protocol &lt;-</span></span>
-<span><span class="co">#   sapply(full_cv_predictions$k,</span></span>
-<span><span class="co">#          function(d) protocols[d-1]) #  d - 1 bc k starts at 2</span></span>
-<span><span class="co"># #  (k = 1 is fc data)</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># full_cv_predictions$specimen &lt;-</span></span>
-<span><span class="co">#   sapply(full_cv_predictions$k,</span></span>
-<span><span class="co">#          function(d) individuals[d - 1]) #  d - 1 bc k starts at 2</span></span>
-<span><span class="co"># #  (k = 1 is fc data)</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># null_cv_predictions &lt;- lapply(1:10,</span></span>
-<span><span class="co">#                               function(x)</span></span>
-<span><span class="co">#                                 null_cv[[x]]$varying[</span></span>
-<span><span class="co">#                                   null_cv[[x]]$varying$param == "P"&amp;</span></span>
-<span><span class="co">#                                     null_cv[[x]]$varying$k&gt;1,])</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># for(i in 1:10){</span></span>
-<span><span class="co">#   null_cv_predictions[[i]]$k &lt;- sapply(null_cv_predictions[[i]]$k,</span></span>
-<span><span class="co">#                                        function(x) folds[[i]][x - 1])</span></span>
-<span><span class="co">#   </span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># null_cv_predictions &lt;- do.call(rbind,null_cv_predictions)</span></span>
-<span><span class="co"># fc_values &lt;- W[1,]/sum(W[1,])</span></span>
-<span><span class="co"># null_cv_predictions$fc_value &lt;- sapply(null_cv_predictions$j,</span></span>
-<span><span class="co">#                                        function(d) fc_values[d])</span></span>
-<span><span class="co"># null_cv_predictions$protocol &lt;-</span></span>
-<span><span class="co">#   sapply(null_cv_predictions$k,</span></span>
-<span><span class="co">#          function(d) protocols[d -1 ]) #  d - 1 bc k starts at 2 (k = 1 is fc data)</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># null_cv_predictions$specimen &lt;-</span></span>
-<span><span class="co">#   sapply(null_cv_predictions$k,</span></span>
-<span><span class="co">#          function(d) individuals[d - 1]) #  d - 1 bc k starts at 2 (k = 1 is fc data)</span></span>
-<span><span class="co"># null_cv_predictions$model &lt;- "Null Model"</span></span>
-<span><span class="co"># full_cv_predictions$model &lt;- "Full Model"</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># W_prop &lt;- W[-1,]</span></span>
-<span><span class="co"># for(i in 1:nrow(W_prop)){</span></span>
-<span><span class="co">#   W_prop[i,] &lt;- W_prop[i,]/sum(W_prop[i,])</span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># naive_predictions &lt;- null_cv_predictions[numeric(0),]</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># for(i in 1:nrow(W_prop)){</span></span>
-<span><span class="co">#   protocol &lt;- protocols[i]</span></span>
-<span><span class="co">#   specimen &lt;- individuals[i]</span></span>
-<span><span class="co">#   for(j in 1:ncol(W)){</span></span>
-<span><span class="co">#     naive_predictions &lt;- rbind(naive_predictions,</span></span>
-<span><span class="co">#                                data.frame(value = W_prop[i,j],</span></span>
-<span><span class="co">#                                           param = "P",</span></span>
-<span><span class="co">#                                           k = i,</span></span>
-<span><span class="co">#                                           j  = j,</span></span>
-<span><span class="co">#                                           fc_value = fc_values[j],</span></span>
-<span><span class="co">#                                           protocol = protocol,</span></span>
-<span><span class="co">#                                           specimen = specimen,</span></span>
-<span><span class="co">#                                           model = "Plug-in"))</span></span>
-<span><span class="co">#   }</span></span>
-<span><span class="co"># }</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># rbind(null_cv_predictions,full_cv_predictions,</span></span>
-<span><span class="co">#       naive_predictions) %&gt;%</span></span>
-<span><span class="co">#   mutate(protocol = sapply(protocol, function(x) paste("Protocol ",x,</span></span>
-<span><span class="co">#                                                        sep = "",</span></span>
-<span><span class="co">#                                                        collapse = ""))) %&gt;%</span></span>
-<span><span class="co">#   # filter(!is.na(protocol)) %&gt;% #why would protocol be NA? Check!</span></span>
-<span><span class="co">#   ggplot() +</span></span>
-<span><span class="co">#   geom_point(aes(x = fc_value, y = value, color= specimen),</span></span>
-<span><span class="co">#              size = .5) +</span></span>
-<span><span class="co">#   geom_line(aes(x = fc_value, y = value, color = specimen,</span></span>
-<span><span class="co">#                 group = as.factor(k)), size = .5) +</span></span>
-<span><span class="co">#   geom_abline(aes(intercept = 0, slope = 1), linetype = 2) +</span></span>
-<span><span class="co">#   facet_grid(model~protocol,scales = "free_y") +</span></span>
-<span><span class="co">#   scale_color_grey() +</span></span>
-<span><span class="co">#   scale_y_log10() +</span></span>
-<span><span class="co">#   scale_x_log10() +</span></span>
-<span><span class="co">#   theme_bw() +</span></span>
-<span><span class="co">#   guides(color=guide_legend(title="Specimen")) +</span></span>
-<span><span class="co">#   xlab("Relative Abundance Measured by Flow Cytometry") +</span></span>
-<span><span class="co">#   ylab("Cross-Validated Estimated Relative Abundance")</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">bootstrap_test</span> <span class="op">&lt;-</span>  </span>
+<span>  <span class="fu"><a href="../reference/bootstrap_lrt.html">bootstrap_lrt</a></span><span class="op">(</span>W <span class="op">=</span> <span class="va">W</span>,</span>
+<span>                fitted_model<span class="op">=</span> <span class="va">full_model</span>,</span>
+<span>                null_param <span class="op">=</span> <span class="va">null_param</span>,</span>
+<span>                n_boot <span class="op">=</span> <span class="fl">500</span>, <span class="co"># do 1000 for a paper, 100 for a first look</span></span>
+<span>                ncores <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                parallelize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>You can obtain the p-value for this test via
+<code>bootstrap_test$boot_pval</code>. Here, it’s definitely rejected –
+not one bootstrapped test statistic under the null came close to our
+observed test statistic.</p>
+<p>Ok! That’s it for estimation and testing of detectabilities. Let us
+know your questions, and thanks for using <code>tinyvamp</code>!</p>
 <div class="section level3">
 <h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
