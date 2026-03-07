@@ -98,6 +98,29 @@ parameter rho_tilde</p>
 rho_tilde to entries of P_tilde</p></dd>
 
 
+<dt id="arg-x-tilde">X_tilde<a class="anchor" aria-label="anchor" href="#arg-x-tilde"></a></dt>
+<dd><p>The spurious read efficiency design (K_tilde x p)</p></dd>
+
+
+<dt id="arg-z-tilde">Z_tilde<a class="anchor" aria-label="anchor" href="#arg-z-tilde"></a></dt>
+<dd><p>The spurious read design (n x K_tilde)</p></dd>
+
+
+<dt id="arg-z-tilde-gamma-cols">Z_tilde_gamma_cols<a class="anchor" aria-label="anchor" href="#arg-z-tilde-gamma-cols"></a></dt>
+<dd><p>Numeric vector containing indexes of columns of
+Z_tilde to scale by exp(gamma); NULL if no columns to be scaled</p></dd>
+
+
+<dt id="arg-alpha-tilde">alpha_tilde<a class="anchor" aria-label="anchor" href="#arg-alpha-tilde"></a></dt>
+<dd><p>A numeric vector containing starting values of length \(M\). If used, <code>Z_tilde_list</code> must be provided.</p></dd>
+
+
+<dt id="arg-z-tilde-list">Z_tilde_list<a class="anchor" aria-label="anchor" href="#arg-z-tilde-list"></a></dt>
+<dd><p>A list of length \(M + 1\) containing matrices \(\tilde{Z}_1,\dots,\tilde{Z}_{M + 1}\) to be linearly combined to
+generate <code>Z_tilde</code>: \(\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}\). If used,
+<code>alpha_tilde</code> must be provided.</p></dd>
+
+
 <dt id="arg-fixed-p-multipliers">fixed_P_multipliers<a class="anchor" aria-label="anchor" href="#arg-fixed-p-multipliers"></a></dt>
 <dd><p>Numeric vector of length K containing values in (0,1]
 equal to 1 - sum(fixed relative abundances in row k of P_tilde)</p></dd>

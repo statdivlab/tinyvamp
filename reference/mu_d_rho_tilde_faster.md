@@ -57,6 +57,32 @@ mu_d_rho_tilde_faster(
   List containing matrices that map back-transformed rho_tilde to
   entries of P_tilde
 
+- X_tilde:
+
+  The spurious read efficiency design (K_tilde x p)
+
+- Z_tilde:
+
+  The spurious read design (n x K_tilde)
+
+- Z_tilde_gamma_cols:
+
+  Numeric vector containing indexes of columns of Z_tilde to scale by
+  exp(gamma); NULL if no columns to be scaled
+
+- alpha_tilde:
+
+  A numeric vector containing starting values of length \\M\\. If used,
+  `Z_tilde_list` must be provided.
+
+- Z_tilde_list:
+
+  A list of length \\M + 1\\ containing matrices
+  \\\tilde{Z}\_1,\dots,\tilde{Z}\_{M + 1}\\ to be linearly combined to
+  generate `Z_tilde`: \\\tilde{Z} = \tilde{Z}\_{(1)} + \sum\_{m = 1}^M
+  \exp(\tilde{\alpha}\_m)\tilde{Z}\_{(m + 1)}\\. If used, `alpha_tilde`
+  must be provided.
+
 - fixed_P_multipliers:
 
   Numeric vector of length K containing values in (0,1\] equal to 1 -

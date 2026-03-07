@@ -111,6 +111,16 @@
 Z_tilde to scale by exp(gamma); NULL if no columns to be scaled</p></dd>
 
 
+<dt id="arg-alpha-tilde">alpha_tilde<a class="anchor" aria-label="anchor" href="#arg-alpha-tilde"></a></dt>
+<dd><p>A numeric vector containing starting values of length \(M\). If used, <code>Z_tilde_list</code> must be provided.</p></dd>
+
+
+<dt id="arg-z-tilde-list">Z_tilde_list<a class="anchor" aria-label="anchor" href="#arg-z-tilde-list"></a></dt>
+<dd><p>A list of length \(M + 1\) containing matrices \(\tilde{Z}_1,\dots,\tilde{Z}_{M + 1}\) to be linearly combined to
+generate <code>Z_tilde</code>: \(\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}\). If used,
+<code>alpha_tilde</code> must be provided.</p></dd>
+
+
 <dt id="arg-p-tilde">P_tilde<a class="anchor" aria-label="anchor" href="#arg-p-tilde"></a></dt>
 <dd><p>The spurious source relative abundance matrix (K_tilde x J)</p></dd>
 
