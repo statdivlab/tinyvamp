@@ -31,7 +31,7 @@ Because of its flexibility, fitting a model using `tinyvamp` involves specifying
 
 We will start by loading the relevant packages. 
 
-```{r setup}
+```{r setup, message=FALSE}
 library(tidyverse)
 library(tinyvamp)
 ```

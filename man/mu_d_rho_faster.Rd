@@ -42,6 +42,8 @@ rho to entries of P}
 \item{fixed_P_multipliers}{Numeric vector of length K containing values in (0,1]
 equal to 1 - sum(fixed relative abundances in row k of P)
 Z_tilde to scale by exp(gamma); NULL if no columns to be scaled}
+
+\item{proportion_scale}{No idea}
 }
 \value{
 A derivative d mu_i / d rho_k

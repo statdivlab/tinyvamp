@@ -3,7 +3,7 @@
 \name{mu_d_rho_tilde_faster}
 \alias{mu_d_rho_tilde_faster}
 \title{Calculate derivative of mu_i with respect to a row of matrix-valued
-parameter rho_tilde}
+parameter rho_tilde.}
 \usage{
 mu_d_rho_tilde_faster(
   i,
@@ -39,6 +39,10 @@ mu_d_rho_tilde_faster(
 \item{A_tilde_k_list}{List containing matrices that map back-transformed
 rho_tilde to entries of P_tilde}
 
+\item{fixed_P_tilde_multipliers}{Numeric vector of row-specific multipliers
+applied to the derivative of the transformation from
+\eqn{\tilde{\rho}} to \eqn{\tilde{P}}.}
+
 \item{X_tilde}{The spurious read efficiency design (K_tilde x p)}
 
 \item{Z_tilde}{The spurious read design (n x K_tilde)}
@@ -52,13 +56,18 @@ Z_tilde to scale by exp(gamma); NULL if no columns to be scaled}
 generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}}. If used,
 \code{alpha_tilde} must be provided.}
 
-\item{fixed_P_multipliers}{Numeric vector of length K containing values in (0,1]
-equal to 1 - sum(fixed relative abundances in row k of P_tilde)}
+\item{gamma_tilde}{Numeric vector of row-specific intercept terms for the
+spurious read model.}
+
+\item{proportion_scale}{Logical. If \code{FALSE}, return the derivative of
+\eqn{\mu_i} with respect to row \code{k_tilde} of \eqn{\tilde{\rho}}. If
+\code{TRUE}, return only the derivative with respect to the corresponding
+row of \eqn{\tilde{P}}.}
 }
 \value{
 A derivative d mu_i / d rho_tilde_k
 }
 \description{
 Calculate derivative of mu_i with respect to a row of matrix-valued
-parameter rho_tilde
+parameter rho_tilde.
 }

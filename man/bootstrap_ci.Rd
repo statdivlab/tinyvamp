@@ -18,6 +18,74 @@ bootstrap_ci(
   adjust = FALSE
 )
 }
+\arguments{
+\item{W}{A numeric matrix of observed counts with \eqn{n} rows
+(samples) and \eqn{J} columns (taxa).}
+
+\item{fitted_model}{A fitted tinyvamp model object, typically returned by
+\code{estimate_parameters()}, containing the original fit and all inputs
+needed for refitting during bootstrap iterations.}
+
+\item{n_boot}{Integer; the number of bootstrap replicates.}
+
+\item{m}{Optional numeric subsample size parameter for the Bayesian
+subsampled bootstrap. If \code{NULL}, defaults to \code{sqrt(n)}, where
+\eqn{n} is the number of rows of \code{W}.}
+
+\item{alpha}{Significance level used to construct two-sided
+confidence intervals. The default \code{0.05} yields 95\\% intervals.}
+
+\item{parallelize}{Logical; if \code{TRUE}, bootstrap replicates are fit in
+parallel using \code{parallel::mclapply()}. If \code{FALSE}, replicates are
+fit sequentially.}
+
+\item{ncores}{Integer; number of cores to use when
+\code{parallelize = TRUE}.}
+
+\item{seed}{Optional integer random seed. If \code{NULL}, a seed value of
+\code{0} is used.}
+
+\item{return_models}{Logical; if \code{TRUE}, return the fitted bootstrap
+model objects in addition to the confidence interval summary.}
+
+\item{verbose}{Logical; if \code{TRUE}, print progress messages during
+sequential bootstrap fitting and pass verbose output to the internal model
+fitting routine.}
+
+\item{adjust}{Logical; if \code{TRUE}, apply a finite-sample adjustment to
+the bootstrap deviations based on the number of non-\code{"gamma"}
+varying parameters.}
+}
+\value{
+A list with components:
+\describe{
+\item{\code{ci}}{A data frame based on \code{fitted_model$varying} with
+added columns \code{lower_ci} and \code{upper_ci}.}
+\item{\code{bootstrapped_models}}{If \code{return_models = TRUE}, a list of
+fitted model objects from the bootstrap replicates; otherwise \code{NULL}.}
+}
+}
 \description{
-Apply the Bayesian subsampled bootstrap to a fitted tinyvamp model
+Compute bootstrap confidence intervals for the varying parameters of a
+fitted tinyvamp model using a Bayesian subsampled bootstrap procedure.
+Each bootstrap replicate refits the model using randomly generated
+observation weights, and confidence intervals are formed from the
+empirical quantiles of the bootstrap distribution.
+}
+\details{
+For each bootstrap replicate, the function generates a vector of Bayesian
+bootstrap weights from a gamma distribution, rescales them, and uses them as
+observation weights in a call to \code{estimate_parameters()}. The resulting
+bootstrap distribution is centered at the original fitted values and scaled
+by \eqn{\sqrt{m}}. Confidence intervals are then obtained by inverting the
+bootstrap quantiles and scaling by \eqn{1 / \sqrt{n}}.
+
+When \code{adjust = TRUE}, the bootstrap deviations are multiplied by a
+correction factor
+\deqn{\sqrt{\frac{nJ}{nJ - p}}}
+where \eqn{p} is the number of varying parameters whose \code{param} field is
+not equal to \code{"gamma"}.
+
+Confidence interval bounds for parameters labeled \code{"P"} or
+\code{"P_tilde"} are truncated to lie in \eqn{[0, 1]}.
 }

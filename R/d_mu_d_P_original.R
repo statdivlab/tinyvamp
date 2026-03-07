@@ -16,18 +16,13 @@
 #' @param gamma_tilde Spurious read intensity parameter
 #'
 #' @return A derivative d mu_ij / d P_kj
-mu_d_P <- function(i,
-                   j,
-                   m,
-                   gammas,
-                   B,
-                   X,
-                   Z,
-                   P){
-
+mu_d_P <- function(i, j, m, gammas, B, X, Z, P) {
   mu_deriv <-
-    Z[i,m,drop = F]*exp(gammas[i] +
-                          X[i,,drop = F]%*%B[,j,drop = F])
+    Z[i, m, drop = F] *
+    exp(
+      gammas[i] +
+        X[i, , drop = F] %*% B[, j, drop = F]
+    )
 
   return(mu_deriv)
 }

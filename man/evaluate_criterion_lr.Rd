@@ -40,7 +40,7 @@ sum to 1 or be identically 0.}
 multiplied by exp(gamma).}
 
 \item{Z_tilde_list}{Optional list-form representation of \code{Z_tilde} or
-related auxiliary structures used by \code{\link[=meaninate]{meaninate()}}.}
+related auxiliary structures.}
 
 \item{X_tilde}{Design matrix associated with spurious-read or auxiliary
 components of the mean model.}
@@ -65,11 +65,10 @@ relative abundance scale before evaluation.}
 \item{include_log_penalty}{Logical; if \code{TRUE}, include the log-barrier
 penalty when \code{lr_scale = TRUE}.}
 
-\item{wts}{Optional numeric weights passed to \code{\link[=poisson_criterion]{poisson_criterion()}}.}
+\item{wts}{Optional numeric weights}
 
 \item{gmm_inv_wts}{Optional inverse weighting matrix or vector for the GMM
-criterion. If \code{NULL}, it is estimated internally using
-\code{\link[=get_gmm_inv_weights]{get_gmm_inv_weights()}}.}
+criterion. If \code{NULL}, it is estimated internally}
 
 \item{return_gmm_inv_weights}{Logical; if \code{TRUE} and \code{criterion = "GMM"},
 return both the GMM criterion value and the inverse weights.}

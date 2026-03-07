@@ -19,7 +19,8 @@ Depends:
     parallel,
     stats
 Imports:
-    Matrix
+    Matrix,
+    methods
 Suggests:
     knitr,
     phyloseq,
