@@ -24,6 +24,70 @@ evaluate_criterion_lr(
   return_gmm_inv_weights = FALSE
 )
 }
+\arguments{
+\item{W}{An \eqn{n \times J} matrix of numeric HTS output (e.g., read counts, coverages, etc.)}
+
+\item{X}{The sample efficiency design -- an \eqn{n \times p} matrix}
+
+\item{Z}{The sample-specimen design -- an \eqn{n \times K} matrix whose \eqn{ij}-th entry
+indicates the proportional contribution of specimen \eqn{j} to sample \eqn{i}. Rows must
+sum to 1 or be identically 0.}
+
+\item{Z_tilde}{The spurious read design -- an \eqn{n \times \tilde{K}} matrix where
+\eqn{\tilde{K}} is the number of spurious read sources modeled.}
+
+\item{Z_tilde_gamma_cols}{A numeric vector containing the columns of Z_tilde which should be
+multiplied by exp(gamma).}
+
+\item{Z_tilde_list}{Optional list-form representation of \code{Z_tilde} or
+related auxiliary structures used by \code{\link[=meaninate]{meaninate()}}.}
+
+\item{X_tilde}{Design matrix associated with spurious-read or auxiliary
+components of the mean model.}
+
+\item{fixed_df}{A data frame of fixed model parameters.}
+
+\item{varying_df}{A data frame of parameters currently being optimized,
+represented on the natural scale unless \code{lr_scale = TRUE}.}
+
+\item{varying_lr_df}{Optional data frame of varying parameters on the
+log-ratio scale. Used when \code{lr_scale = TRUE}.}
+
+\item{barrier_t}{Optional numeric tuning parameter for the log-ratio barrier
+penalty.}
+
+\item{criterion}{Character string specifying the criterion to evaluate.
+Currently one of \code{"Poisson"} or \code{"GMM"}.}
+
+\item{lr_scale}{Logical; if \code{TRUE}, convert log-ratio scale parameters to
+relative abundance scale before evaluation.}
+
+\item{include_log_penalty}{Logical; if \code{TRUE}, include the log-barrier
+penalty when \code{lr_scale = TRUE}.}
+
+\item{wts}{Optional numeric weights passed to \code{\link[=poisson_criterion]{poisson_criterion()}}.}
+
+\item{gmm_inv_wts}{Optional inverse weighting matrix or vector for the GMM
+criterion. If \code{NULL}, it is estimated internally using
+\code{\link[=get_gmm_inv_weights]{get_gmm_inv_weights()}}.}
+
+\item{return_gmm_inv_weights}{Logical; if \code{TRUE} and \code{criterion = "GMM"},
+return both the GMM criterion value and the inverse weights.}
+}
+\value{
+If \code{criterion = "Poisson"}, a single numeric criterion value.
+
+If \code{criterion = "GMM"} and \code{return_gmm_inv_weights = FALSE}, a single numeric
+criterion value.
+
+If \code{criterion = "GMM"} and \code{return_gmm_inv_weights = TRUE}, a list with
+components:
+\describe{
+\item{gmm_crit}{The numeric GMM criterion value.}
+\item{inv_wts}{The inverse weights used in the GMM calculation.}
+}
+}
 \description{
-Criterion Evaluation Function
+Evaluates the objective function used during model fitting under either a
+Poisson likelihood criterion or a GMM criterion.
 }

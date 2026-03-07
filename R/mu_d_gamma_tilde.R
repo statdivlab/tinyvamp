@@ -14,6 +14,10 @@
 #' Z_tilde to scale by exp(gamma); NULL if no columns to be scaled
 #' @param P_tilde The spurious source relative abundance matrix (K_tilde x J)
 #' @param gamma_tilde Spurious read intensity parameter
+#' @param alpha_tilde A numeric vector containing starting values of length \eqn{M}. If used, \code{Z_tilde_list} must be provided.
+#' @param Z_tilde_list A list of length \eqn{M + 1} containing matrices \eqn{\tilde{Z}_1,\dots,\tilde{Z}_{M + 1}} to be linearly combined to
+#' generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(\tilde{\alpha}_m)\tilde{Z}_{(m + 1)}}. If used,
+#' \code{alpha_tilde} must be provided.
 #'
 #' @return A derivative d mu_ij / d gamma_tilde_k_tilde
 mu_d_gamma_tilde <- function(i,

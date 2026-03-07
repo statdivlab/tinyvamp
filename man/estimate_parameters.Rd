@@ -92,6 +92,10 @@ generate \code{Z_tilde}: \eqn{\tilde{Z} = \tilde{Z}_{(1)} + \sum_{m = 1}^M \exp(
 
 \item{max_barrier}{Maximum value of barrier_t. Defaults to 1e12.}
 
+\item{initial_conv_tol}{Are we flat enough in the likelihood yet? Where to start.}
+
+\item{final_conv_tol}{Are we flat enough in the likelihood yet? Where to end.}
+
 \item{constraint_tolerance}{The tolerance for the augmented Lagrangian algorithm. Final estimates of P are relative abundances to within \code{constraint_tolerance} of 1, i.e., abs(sum p_{kj} - 1) <  \code{constraint_tolerance}. Defaults to 1e-10.}
 
 \item{hessian_regularization}{The second step of optimization involves a quadratic approximation to the likelihood, for which we use a modified Taylor series for stability. This is the constant that dampens the second term. Defaults to 0.01.}

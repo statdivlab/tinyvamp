@@ -8,7 +8,9 @@ Given x and y, this function returns log(exp(x) + exp(y)).}
 sum_of_logs(x, y = NULL)
 }
 \arguments{
-\item{x}{the thing to be summed}
+\item{x}{the thing to be summed.}
+
+\item{y}{the thing to be added to x. If absent, just the sum over vector-valued x is taken.}
 }
 \description{
 Sum positive numbers via their logarithms
