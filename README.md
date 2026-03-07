@@ -12,6 +12,7 @@ status](https://codecov.io/gh/statdivlab/tinyvamp/branch/main/graph/badge.svg)](
 `tinyvamp` is a package for estimation and removal of measurement error in high-throughput sequencing data. 
 
 There are many use cases for `tinyvamp`; here are a few:
+
 - Estimating the detectability of different species using mock communities
 - Comparing experimental protocols (or batches) with respect to how they well they detect different species
 - Estimating "true" relative abundances after adjusting for differential detectability

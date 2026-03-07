@@ -97,22 +97,9 @@ therein for those details!</p>
 <p>We will start by loading the relevant packages.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Attaching core tidyverse packages</span> ──────────────────────── tidyverse 2.0.0 ──</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">dplyr    </span> 1.1.4     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">readr    </span> 2.1.6</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">forcats  </span> 1.0.1     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">stringr  </span> 1.6.0</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">ggplot2  </span> 4.0.1     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tibble   </span> 3.3.0</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">lubridate</span> 1.9.4     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tidyr    </span> 1.3.1</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">purrr    </span> 1.2.0     </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Conflicts</span> ────────────────────────────────────────── tidyverse_conflicts() ──</span></span>
-<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">filter()</span> masks <span style="color: #0000BB;">stats</span>::filter()</span></span>
-<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">lag()</span>    masks <span style="color: #0000BB;">stats</span>::lag()</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Use the conflicted package (<span style="color: #0000BB; font-style: italic;">&lt;http://conflicted.r-lib.org/&gt;</span>) to force all conflicts to become errors</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/statdivlab/tinyvamp" class="external-link">tinyvamp</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: cir</span></span>
-<span><span class="co">#&gt; Loading required package: fastnnls</span></span>
-<span><span class="co">#&gt; Loading required package: logsum</span></span>
-<span><span class="co">#&gt; Loading required package: numDeriv</span></span>
-<span><span class="co">#&gt; Loading required package: parallel</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="va">filter</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span></span></code></pre></div>
 <p>Now let’s load the relevant data and inspect it. This dataset
 contains the MetaPhlAn2-estimated relative abundances of taxa in 29
 samples, formatted in the usual MetaPhlAn2 way (percentages listed at
@@ -232,7 +219,7 @@ how we could create that matrix:</p>
 <span>         qq <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">Protocol</span> <span class="op">==</span> <span class="st">"Q"</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Protocol</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>         ww <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">Protocol</span> <span class="op">==</span> <span class="st">"W"</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Protocol</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">hh</span>, <span class="va">qq</span>, <span class="va">ww</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="va">as.matrix</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># convert to numeric matrix required by tinyvamp</span></span></code></pre></div>
 <p>TODO(AW) can we remove the as.matrix?</p>
 <p>However, we are interested in assessing the evidence against
 detection efficiencies being the same between protocols H, Q and W. To
@@ -401,17 +388,64 @@ some of the estimates:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 0.077<span style="text-decoration: underline;">3</span> P         1     9</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 0.099<span style="text-decoration: underline;">2</span> P         1    10</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 57 more rows</span></span></span></code></pre></div>
-<p>TODO(picture!)</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">beta_est</span> <span class="op">&lt;-</span> <span class="va">full_model</span><span class="op">$</span><span class="va">varying</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">param</span> <span class="op">==</span> <span class="st">"B"</span><span class="op">)</span></span>
+<span><span class="va">beta_est</span></span>
+<span><span class="co">#&gt;           value param k j</span></span>
+<span><span class="co">#&gt; 110 -1.61248573     B 1 1</span></span>
+<span><span class="co">#&gt; 41  -0.17640279     B 1 2</span></span>
+<span><span class="co">#&gt; 71   3.37728585     B 1 3</span></span>
+<span><span class="co">#&gt; 101 -0.18784085     B 1 4</span></span>
+<span><span class="co">#&gt; 13   2.36839888     B 1 5</span></span>
+<span><span class="co">#&gt; 16  -2.62182196     B 1 6</span></span>
+<span><span class="co">#&gt; 19   4.16506177     B 1 7</span></span>
+<span><span class="co">#&gt; 22   2.48598212     B 1 8</span></span>
+<span><span class="co">#&gt; 25   1.53517280     B 1 9</span></span>
+<span><span class="co">#&gt; 28   0.06672387     B 2 1</span></span>
+<span><span class="co">#&gt; 51  -0.38971288     B 2 2</span></span>
+<span><span class="co">#&gt; 81  -0.89829964     B 2 3</span></span>
+<span><span class="co">#&gt; 11   0.17631021     B 2 4</span></span>
+<span><span class="co">#&gt; 14  -2.23142349     B 2 5</span></span>
+<span><span class="co">#&gt; 17   3.34467253     B 2 6</span></span>
+<span><span class="co">#&gt; 20  -0.28219752     B 2 7</span></span>
+<span><span class="co">#&gt; 23   0.25894574     B 2 8</span></span>
+<span><span class="co">#&gt; 26  -0.63032524     B 2 9</span></span>
+<span><span class="co">#&gt; 31   1.53669302     B 3 1</span></span>
+<span><span class="co">#&gt; 61   1.40203711     B 3 2</span></span>
+<span><span class="co">#&gt; 91   0.66859539     B 3 3</span></span>
+<span><span class="co">#&gt; 12   0.09250658     B 3 4</span></span>
+<span><span class="co">#&gt; 15  -0.25670609     B 3 5</span></span>
+<span><span class="co">#&gt; 18   3.22037528     B 3 6</span></span>
+<span><span class="co">#&gt; 21   0.08328595     B 3 7</span></span>
+<span><span class="co">#&gt; 24  -0.00224524     B 3 8</span></span>
+<span><span class="co">#&gt; 27  -0.05501484     B 3 9</span></span>
+<span><span class="co"># beta_df &lt;- as_tibble(beta_est) %&gt;%</span></span>
+<span><span class="co">#   mutate(protocol = c("H vs flow", "Q vs H", "W vs H")) %&gt;%</span></span>
+<span><span class="co">#   pivot_longer(-protocol, names_to = "taxon", values_to = "beta") %&gt;%</span></span>
+<span><span class="co">#   mutate(effect = exp(beta))</span></span>
+<span><span class="co"># </span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">beta_est</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">j</span>, y <span class="op">=</span> <span class="va">value</span>, color <span class="op">=</span> <span class="va">k</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    y <span class="op">=</span> <span class="st">"Multiplicative detection efficiency"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"Taxon"</span>,</span>
+<span>    title <span class="op">=</span> <span class="st">"Estimated detection efficiencies by protocol"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="compare-experiments_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 <p>Now, to test… we need to tell tinyvamp what the null hypothesis is.
 We do this as follows:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### Create null model specification for test</span></span>
 <span><span class="va">null_param</span> <span class="op">&lt;-</span> <span class="va">full_model</span></span>
 <span><span class="co">### set second and third rows of B equal to zero</span></span>
 <span><span class="va">null_param</span><span class="op">$</span><span class="va">B</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">null_param</span><span class="op">$</span><span class="va">B_fixed_indices</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
 <p>This next step can take ages! Good to parallelize if possible.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># bootstrap_test &lt;-  bootstrap_lrt(W = W,</span></span>
 <span><span class="co">#                                  fitted_model= full_model,</span></span>
 <span><span class="co">#                                  null_param = null_param,</span></span>
@@ -425,7 +459,7 @@ bootstrap from original model, but currently a bit more involved to pull
 out CIs for quantities of form
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A%*%beta</annotation></semantics></math>
 than for beta itself)</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X_repar</span> <span class="op">&lt;-</span> <span class="va">X</span></span>
 <span><span class="va">X_repar</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">-</span> <span class="va">X_repar</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span></span>
 <span><span class="va">full_reparam</span>  <span class="op">&lt;-</span></span>
@@ -566,7 +600,7 @@ than for beta itself)</p>
 <div class="section level2">
 <h2 id="fold-cross-validation">10-fold cross-validation<a class="anchor" aria-label="anchor" href="#fold-cross-validation"></a>
 </h2>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># </span></span>
 <span><span class="co"># # construct folds</span></span>
 <span><span class="co"># folds &lt;- vector(10, mode = "list")</span></span>
@@ -785,7 +819,7 @@ microbiome experiments. <em>arxiv</em> 2204.12733. <a href="https://arxiv.org/ab
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

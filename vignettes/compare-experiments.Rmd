@@ -34,6 +34,8 @@ We will start by loading the relevant packages.
 ```{r setup, message=FALSE}
 library(tidyverse)
 library(tinyvamp)
+library(dplyr)
+filter <- dplyr::filter
 ```
 
 Now let's load the relevant data and inspect it. This dataset contains the MetaPhlAn2-estimated relative abundances of taxa in 29 samples, formatted in the usual MetaPhlAn2 way (percentages listed at all taxonomic levels): 
@@ -112,7 +114,7 @@ X <- protocol_df %>%
          qq = ifelse(Protocol == "Q" & !is.na(Protocol), 1, 0),
          ww = ifelse(Protocol == "W" & !is.na(Protocol), 1, 0)) %>% 
   select(hh, qq, ww) %>%
-  as.matrix
+  as.matrix()   # convert to numeric matrix required by tinyvamp
 ```
 
 TODO(AW) can we remove the as.matrix?
@@ -239,7 +241,27 @@ Woohoo, done! Pretty fast considering the number of parameters in this model (67
 full_model$varying %>% as_tibble
 ```
 
-TODO(picture!)
+
+```{r}
+library(ggplot2)
+
+beta_est <- full_model$varying %>% filter(param == "B")
+beta_est
+# beta_df <- as_tibble(beta_est) %>%
+#   mutate(protocol = c("H vs flow", "Q vs H", "W vs H")) %>%
+#   pivot_longer(-protocol, names_to = "taxon", values_to = "beta") %>%
+#   mutate(effect = exp(beta))
+# 
+ggplot(beta_est, aes(x = j, y = value, color = k)) +
+  geom_point() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_flip() +
+  labs(
+    y = "Multiplicative detection efficiency",
+    x = "Taxon",
+    title = "Estimated detection efficiencies by protocol"
+  )
+```
 
 Now, to test... we need to tell tinyvamp what the null hypothesis is. We do this as follows:
 

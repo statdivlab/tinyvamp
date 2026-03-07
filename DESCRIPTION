@@ -1,6 +1,6 @@
 Package: tinyvamp
 Title: Modeling complex measurement error in microbiome experiments
-Version: 0.0.7.0
+Version: 1.0.0.0
 Authors@R: as.person(c(
     "David Clausen [aut]",
     "Amy Willis <adwillis@uw.edu> [aut, cre]"
@@ -21,7 +21,10 @@ Imports:
     Matrix,
     methods
 Suggests:
+    dplyr,
+    ggplot2,
     knitr,
+    numDeriv,
     phyloseq,
     rmarkdown,
     phyloseq,
