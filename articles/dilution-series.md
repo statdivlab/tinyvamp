@@ -27,7 +27,6 @@ library(tidyverse)
 #> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(tinyvamp)
 #> Loading required package: cir
-#> Loading required package: numDeriv
 #> Loading required package: parallel
 library(phyloseq) 
 # library(speedyseq)

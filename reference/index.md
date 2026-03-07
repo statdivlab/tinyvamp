@@ -27,6 +27,8 @@
   : karstens_phyloseq
 - [`meaninate()`](https://statdivlab.github.io/tinyvamp/reference/meaninate.md)
   : Calculate the mean given parameters
+- [`mu_d_P()`](https://statdivlab.github.io/tinyvamp/reference/mu_d_P.md)
+  : Calculate derivative of mu_ij with respect to an entry of P
 - [`mu_d_beta()`](https://statdivlab.github.io/tinyvamp/reference/mu_d_beta.md)
   : Calculate derivative of mu_ij with respect to B
 - [`mu_d_gamma()`](https://statdivlab.github.io/tinyvamp/reference/mu_d_gamma.md)
