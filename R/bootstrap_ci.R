@@ -16,7 +16,7 @@
 #'   subsampled bootstrap. If \code{NULL}, defaults to \code{sqrt(n)}, where
 #'   \eqn{n} is the number of rows of \code{W}.
 #' @param alpha Significance level used to construct two-sided
-#'   confidence intervals. The default \code{0.05} yields 95\% intervals.
+#'   confidence intervals. The default \code{0.05} yields 95% intervals.
 #' @param parallelize Logical; if \code{TRUE}, bootstrap replicates are fit in
 #'   parallel using \code{parallel::mclapply()}. If \code{FALSE}, replicates are
 #'   fit sequentially.
@@ -47,17 +47,12 @@
 #' where \eqn{p} is the number of varying parameters whose \code{param} field is
 #' not equal to \code{"gamma"}.
 #'
-#' Confidence interval bounds for parameters labeled \code{"P"} or
-#' \code{"P_tilde"} are truncated to lie in \eqn{[0, 1]}.
 #'
 #' @return
-#' A list with components:
-#' \describe{
-#'   \item{\code{ci}}{A data frame based on \code{fitted_model$varying} with
-#'   added columns \code{lower_ci} and \code{upper_ci}.}
-#'   \item{\code{bootstrapped_models}}{If \code{return_models = TRUE}, a list of
-#'   fitted model objects from the bootstrap replicates; otherwise \code{NULL}.}
-#' }
+#' A list with components \code{ci} and \code{bootstrapped_models}. The former
+#' is a data frame with columns \code{lower_ci} and \code{upper_ci}. If
+#'  \code{return_models = TRUE}, the latter is a list of
+#'  fitted model objects from the bootstrap replicates; otherwise \code{NULL}.
 #'
 #' @import stats
 #' @import parallel
