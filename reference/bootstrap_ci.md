@@ -1,5 +1,11 @@
 # Apply the Bayesian subsampled bootstrap to a fitted tinyvamp model
 
+Compute bootstrap confidence intervals for the varying parameters of a
+fitted tinyvamp model using a Bayesian subsampled bootstrap procedure.
+Each bootstrap replicate refits the model using randomly generated
+observation weights, and confidence intervals are formed from the
+empirical quantiles of the bootstrap distribution.
+
 ## Usage
 
 ``` r
@@ -45,55 +51,57 @@ bootstrap_ci(
 - alpha:
 
   Significance level used to construct two-sided confidence intervals.
-  The default `0.05` yields 95\\
+  The default `0.05` yields 95% intervals.
 
-  parallelizeLogical; if `TRUE`, bootstrap replicates are fit in
-  parallel using
+- parallelize:
+
+  Logical; if `TRUE`, bootstrap replicates are fit in parallel using
   [`parallel::mclapply()`](https://rdrr.io/r/parallel/mclapply.html). If
   `FALSE`, replicates are fit sequentially.
 
-  ncoresInteger; number of cores to use when `parallelize = TRUE`.
+- ncores:
 
-  seedOptional integer random seed. If `NULL`, a seed value of `0` is
-  used.
+  Integer; number of cores to use when `parallelize = TRUE`.
 
-  return_modelsLogical; if `TRUE`, return the fitted bootstrap model
-  objects in addition to the confidence interval summary.
+- seed:
 
-  verboseLogical; if `TRUE`, print progress messages during sequential
+  Optional integer random seed. If `NULL`, a seed value of `0` is used.
+
+- return_models:
+
+  Logical; if `TRUE`, return the fitted bootstrap model objects in
+  addition to the confidence interval summary.
+
+- verbose:
+
+  Logical; if `TRUE`, print progress messages during sequential
   bootstrap fitting and pass verbose output to the internal model
   fitting routine.
 
-  adjustLogical; if `TRUE`, apply a finite-sample adjustment to the
-  bootstrap deviations based on the number of non-`"gamma"` varying
-  parameters.
+- adjust:
 
-A list with components:
+  Logical; if `TRUE`, apply a finite-sample adjustment to the bootstrap
+  deviations based on the number of non-`"gamma"` varying parameters.
 
-- `ci`:
+## Value
 
-  A data frame based on `fitted_model$varying` with added columns
-  `lower_ci` and `upper_ci`.
+A list with components `ci` and `bootstrapped_models`. The former is a
+data frame with columns `lower_ci` and `upper_ci`. If
+`return_models = TRUE`, the latter is a list of fitted model objects
+from the bootstrap replicates; otherwise `NULL`.
 
-- `bootstrapped_models`:
+## Details
 
-  If `return_models = TRUE`, a list of fitted model objects from the
-  bootstrap replicates; otherwise `NULL`.
-
-Compute bootstrap confidence intervals for the varying parameters of a
-fitted tinyvamp model using a Bayesian subsampled bootstrap procedure.
-Each bootstrap replicate refits the model using randomly generated
-observation weights, and confidence intervals are formed from the
-empirical quantiles of the bootstrap distribution. For each bootstrap
-replicate, the function generates a vector of Bayesian bootstrap weights
-from a gamma distribution, rescales them, and uses them as observation
-weights in a call to
+For each bootstrap replicate, the function generates a vector of
+Bayesian bootstrap weights from a gamma distribution, rescales them, and
+uses them as observation weights in a call to
 [`estimate_parameters()`](https://statdivlab.github.io/tinyvamp/reference/estimate_parameters.md).
 The resulting bootstrap distribution is centered at the original fitted
 values and scaled by \\\sqrt{m}\\. Confidence intervals are then
 obtained by inverting the bootstrap quantiles and scaling by \\1 /
-\sqrt{n}\\.When `adjust = TRUE`, the bootstrap deviations are multiplied
-by a correction factor \$\$\sqrt{\frac{nJ}{nJ - p}}\$\$ where \\p\\ is
-the number of varying parameters whose `param` field is not equal to
-`"gamma"`.Confidence interval bounds for parameters labeled `"P"` or
-`"P_tilde"` are truncated to lie in \\\[0, 1\]\\.
+\sqrt{n}\\.
+
+When `adjust = TRUE`, the bootstrap deviations are multiplied by a
+correction factor \$\$\sqrt{\frac{nJ}{nJ - p}}\$\$ where \\p\\ is the
+number of varying parameters whose `param` field is not equal to
+`"gamma"`.

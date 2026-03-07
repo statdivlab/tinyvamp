@@ -29,6 +29,8 @@ We will start by loading the relevant packages.
 ``` r
 library(tidyverse)
 library(tinyvamp)
+library(dplyr)
+filter <- dplyr::filter
 ```
 
 Now let’s load the relevant data and inspect it. This dataset contains
@@ -161,7 +163,7 @@ X <- protocol_df %>%
          qq = ifelse(Protocol == "Q" & !is.na(Protocol), 1, 0),
          ww = ifelse(Protocol == "W" & !is.na(Protocol), 1, 0)) %>% 
   select(hh, qq, ww) %>%
-  as.matrix
+  as.matrix()   # convert to numeric matrix required by tinyvamp
 ```
 
 TODO(AW) can we remove the as.matrix?
@@ -323,7 +325,56 @@ full_model$varying %>% as_tibble
 #> # ℹ 57 more rows
 ```
 
-TODO(picture!)
+``` r
+library(ggplot2)
+
+beta_est <- full_model$varying %>% filter(param == "B")
+beta_est
+#>           value param k j
+#> 110 -1.61248573     B 1 1
+#> 41  -0.17640279     B 1 2
+#> 71   3.37728585     B 1 3
+#> 101 -0.18784085     B 1 4
+#> 13   2.36839888     B 1 5
+#> 16  -2.62182196     B 1 6
+#> 19   4.16506177     B 1 7
+#> 22   2.48598212     B 1 8
+#> 25   1.53517280     B 1 9
+#> 28   0.06672387     B 2 1
+#> 51  -0.38971288     B 2 2
+#> 81  -0.89829964     B 2 3
+#> 11   0.17631021     B 2 4
+#> 14  -2.23142349     B 2 5
+#> 17   3.34467253     B 2 6
+#> 20  -0.28219752     B 2 7
+#> 23   0.25894574     B 2 8
+#> 26  -0.63032524     B 2 9
+#> 31   1.53669302     B 3 1
+#> 61   1.40203711     B 3 2
+#> 91   0.66859539     B 3 3
+#> 12   0.09250658     B 3 4
+#> 15  -0.25670609     B 3 5
+#> 18   3.22037528     B 3 6
+#> 21   0.08328595     B 3 7
+#> 24  -0.00224524     B 3 8
+#> 27  -0.05501484     B 3 9
+# beta_df <- as_tibble(beta_est) %>%
+#   mutate(protocol = c("H vs flow", "Q vs H", "W vs H")) %>%
+#   pivot_longer(-protocol, names_to = "taxon", values_to = "beta") %>%
+#   mutate(effect = exp(beta))
+# 
+ggplot(beta_est, aes(x = j, y = value, color = k)) +
+  geom_point() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_flip() +
+  labs(
+    y = "Multiplicative detection efficiency",
+    x = "Taxon",
+    title = "Estimated detection efficiencies by protocol"
+  )
+```
+
+![](compare-experiments_files/figure-html/unnamed-chunk-19-1.png)
 
 Now, to test… we need to tell tinyvamp what the null hypothesis is. We
 do this as follows:
