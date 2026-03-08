@@ -156,11 +156,20 @@ estimate_parameters(
 
   Maximum value of barrier_t. Defaults to 1e12.
 
+- initial_conv_tol:
+
+  Are we flat enough in the likelihood yet? Where to start.
+
+- final_conv_tol:
+
+  Are we flat enough in the likelihood yet? Where to end.
+
 - constraint_tolerance:
 
   The tolerance for the augmented Lagrangian algorithm. Final estimates
   of P are relative abundances to within `constraint_tolerance` of 1,
-  i.e., abs(sum p_kj - 1) \< `constraint_tolerance`. Defaults to 1e-10.
+  i.e., \\abs(sum p\_{kj} - 1) \<\\ `constraint_tolerance`. Defaults to
+  1e-10.
 
 - hessian_regularization:
 

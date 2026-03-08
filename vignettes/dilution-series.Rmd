@@ -19,24 +19,38 @@ knitr::opts_chunk$set(
 
 # Scope and purpose
 
-TODO state model we want 
-
 In this vignette, we will walk through how to use `tinyvamp` to estimate detection efficiencies and contamination using dilution series. 
 
-# Comparing detection efficiencies across experiments
+For this analysis, we are going to consider a single mock community that was sequenced 9 times at different dilutions. The composition of the mock community is known to be 8 taxa at 12.5% relative abundance each. 248 taxa were detected, however -- the remaining 240 were contaminants. 
 
-## Setup
+Specifically, we will fit the following model:
+\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} =  e^{\gamma_i} \left( p_{i j}e^{\beta_j} + \tilde{p}_j e^{\tilde{\gamma}_1 }3^{d_i} \right)
+\end{align}
+
+where 
+
+- $p_{ij}$ is the known composition of the mock community
+- $\gamma_i$ reflects how deeply sequenced sample $i$ was
+- $\beta_j$ is the detectability of taxon $j$, relative to the reference taxon *L. fermentum*. (we need to set one element equal to zero for identifiability, and we arbitrarily chose *L. fermentum*). Because detectabilities are not identifiable for contaminant taxa, we fix them to be zero for these taxa. 
+- $\tilde{p}_j$ is the unknown composition of the contaminants. The contamination profile affects all samples, but to differing degrees. 
+- $d_i = 0, 1, \ldots, 8$ is the number of 3-fold dilutions undertaken by sample $i$. 
+- $\tilde{\gamma}_1$ reflects the contamination intensity for the undiluted sample. Notice how the contribution of $\tilde{p}_j$ is proportional to $e^{\tilde{\gamma}_1 }3^{d_i}$. That is, greater and greater contribution for more dilute samples. 
+
+This model reflects the assumption that the ratio of expected contaminant reads to expected non-contaminant reads is proportional to $3^{d_i}$, as we saw empirically. 
+
+# Setup
 
 We will start by loading the relevant packages. We recommend using `speedyseq` instead of `phyloseq`. It's awesome, and you can get it with `remotes::install_github("mikemc/speedyseq")`. 
 
-```{r setup}
+```{r setup, message=FALSE}
 library(tidyverse)
 library(tinyvamp)
 library(phyloseq) 
 # library(speedyseq)
 ```
 
-Now let's load the relevant data and inspect it. This data is from [Karstens et al. (2019)](https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org), who generated 9 samples via three-fold dilutions of a synthetic community containing 8 distinct strains of bacteria which each account for 12.5% of the DNA in the community. Despite only 8 strains being present in the synthetic community, 248 total strains were identified using DADA2 (see Section 12.1 of [our paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data processing). 
+Now let's load the relevant data and inspect it. This data is from [Karstens et al. (2019)](https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org), who generated 9 samples via three-fold dilutions of a synthetic community containing 8 distinct strains of bacteria which each account for 12.5% of the DNA in the community. Despite only 8 strains being present in the synthetic community, 248 total strains were identified using DADA2 (see [our paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data processing). 
 
 ```{r}
 data("karstens_phyloseq")
@@ -262,7 +276,7 @@ beta_psu <- (full_karstens_model$varying %>%
 
 On the basis of this model, we estimate that in an equal mixture of *Pseudomonas aeruginosa* and our reference taxon, *L. fermentum*, we expect on average to observe exp(`r beta_psu %>% round(2)`) = `r beta_psu %>% exp %>% round(2)` *P. aeruginosa*  reads for each *L. fermentum* read. Since all of the estimated $\beta$'s were negative, this tells us that *L. fermentum* is the most easily detected taxon in the mock community.
 
-Aside: The estimated values in this table are pretty similar to those from our paper, with differences being due to different subsets of the data being used for fitting. Here we used all nine samples, whereas for Table 2 we only used two samples. 
+Aside: The estimated values in this table are pretty similar to those from our paper, with differences being due to different subsets of the data being used for fitting. Here we used all nine samples. 
 
 You can look at which other parameters were estimated as follows: 
 
@@ -302,7 +316,7 @@ I hope you found this to be helpful in setting up the `tinyvamp` model to analyz
 
 Happy estimating and experiment-designing! 
 
-## References
+# References
 
 - Karstens, L., Asquith, M., Davin, S. et al. Controlling for Contaminants in Low-Biomass 16S rRNA Gene Sequencing Experiments. *mSystems* **4**(4):e00290-19 (2019). doi: 10.1128/mSystems.00290-19. 
 - Clausen, D.S. and Willis, A.D. Modeling complex measurement error in microbiome experiments. *arxiv* 2204.12733. https://arxiv.org/abs/2204.12733. 

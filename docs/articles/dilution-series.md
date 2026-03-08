@@ -5,9 +5,41 @@
 In this vignette, we will walk through how to use `tinyvamp` to estimate
 detection efficiencies and contamination using dilution series.
 
-## Comparing detection efficiencies across experiments
+For this analysis, we are going to consider a single mock community that
+was sequenced 9 times at different dilutions. The composition of the
+mock community is known to be 8 taxa at 12.5% relative abundance each.
+248 taxa were detected, however – the remaining 240 were contaminants.
 
-### Setup
+Specifically, we will fit the following model:
+``` math
+\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} =  e^{\gamma_i} \left( p_{i j}e^{\beta_j} + \tilde{p}_j e^{\tilde{\gamma}_1 }3^{d_i} \right)
+\end{align}
+```
+
+where
+
+- $`p_{ij}`$ is the known composition of the mock community
+- $`\gamma_i`$ reflects how deeply sequenced sample $`i`$ was
+- $`\beta_j`$ is the detectability of taxon $`j`$, relative to the
+  reference taxon *L. fermentum*. (we need to set one element equal to
+  zero for identifiability, and we arbitrarily chose *L. fermentum*).
+  Because detectabilities are not identifiable for contaminant taxa, we
+  fix them to be zero for these taxa.
+- $`\tilde{p}_j`$ is the unknown composition of the contaminants. The
+  contamination profile affects all samples, but to differing degrees.
+- $`d_i = 0, 1, \ldots, 8`$ is the number of 3-fold dilutions undertaken
+  by sample $`i`$.
+- $`\tilde{\gamma}_1`$ reflects the contamination intensity for the
+  undiluted sample. Notice how the contribution of $`\tilde{p}_j`$ is
+  proportional to $`e^{\tilde{\gamma}_1 }3^{d_i}`$. That is, greater and
+  greater contribution for more dilute samples.
+
+This model reflects the assumption that the ratio of expected
+contaminant reads to expected non-contaminant reads is proportional to
+$`3^{d_i}`$, as we saw empirically.
+
+## Setup
 
 We will start by loading the relevant packages. We recommend using
 `speedyseq` instead of `phyloseq`. It’s awesome, and you can get it with
@@ -15,22 +47,7 @@ We will start by loading the relevant packages. We recommend using
 
 ``` r
 library(tidyverse)
-#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#> ✔ dplyr     1.1.4     ✔ readr     2.1.6
-#> ✔ forcats   1.0.1     ✔ stringr   1.6.0
-#> ✔ ggplot2   4.0.1     ✔ tibble    3.3.0
-#> ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-#> ✔ purrr     1.2.0     
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(tinyvamp)
-#> Loading required package: cir
-#> Loading required package: fastnnls
-#> Loading required package: logsum
-#> Loading required package: numDeriv
-#> Loading required package: parallel
 library(phyloseq) 
 # library(speedyseq)
 ```
@@ -42,9 +59,8 @@ who generated 9 samples via three-fold dilutions of a synthetic
 community containing 8 distinct strains of bacteria which each account
 for 12.5% of the DNA in the community. Despite only 8 strains being
 present in the synthetic community, 248 total strains were identified
-using DADA2 (see Section 12.1 of [our
-paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data
-processing).
+using DADA2 (see [our paper](https://arxiv.org/pdf/2204.12733.pdf) for
+details on data processing).
 
 ``` r
 data("karstens_phyloseq")
@@ -300,11 +316,10 @@ X_tilde <- matrix(0, nrow = 1, ncol = 1)
 
 With all of that hard work parameterizing the model out of the way, we
 can fit the model! The function we use is `estimate_parameters`, and we
-give it all of the information we just put together. ~~Also, we’re going
+give it all of the information we just put together. Also, we’re going
 to use the reweighted estimator, which we generally recommend because it
 has lower variance when the noise in our data is not Poisson-like… that
-is, always!~~ While we’re still debugging an issue in the `cir` package,
-we’ll leave `criterion = "Poisson"`.
+is, always!
 
 ``` r
 full_karstens_model <- estimate_parameters(W = W,
@@ -323,7 +338,7 @@ full_karstens_model <- estimate_parameters(W = W,
                                            P_tilde_fixed_indices = P_tilde_fixed_indices,
                                            gamma_tilde = gamma_tilde,
                                            gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,
-                                           criterion = "Poisson") 
+                                           criterion = "reweighted_Poisson") 
 ```
 
 Wooohooo! That took only a minute or two on my computer, which is pretty
@@ -359,18 +374,18 @@ Terrific! The estimated parameter values are in the object `varying`:
 ``` r
 full_karstens_model$varying %>% as_tibble
 #> # A tibble: 264 × 4
-#>      value param       k     j
-#>      <dbl> <chr>   <dbl> <dbl>
-#>  1 0.0928  P_tilde     1     1
-#>  2 0.0562  P_tilde     1     2
-#>  3 0.0855  P_tilde     1     3
-#>  4 0.0161  P_tilde     1     4
-#>  5 0.0172  P_tilde     1     5
-#>  6 0.0100  P_tilde     1     6
-#>  7 0.0100  P_tilde     1     7
-#>  8 0.0104  P_tilde     1     8
-#>  9 0.00822 P_tilde     1     9
-#> 10 0.0127  P_tilde     1    10
+#>       value param       k     j
+#>       <dbl> <chr>   <dbl> <dbl>
+#>  1 0.0123   P_tilde     1     1
+#>  2 0.0333   P_tilde     1     2
+#>  3 0.0603   P_tilde     1     3
+#>  4 0.0109   P_tilde     1     4
+#>  5 0.0220   P_tilde     1     5
+#>  6 0.00670  P_tilde     1     6
+#>  7 0.00502  P_tilde     1     7
+#>  8 0.00350  P_tilde     1     8
+#>  9 0.00731  P_tilde     1     9
+#> 10 0.000752 P_tilde     1    10
 #> # ℹ 254 more rows
 ```
 
@@ -384,28 +399,27 @@ estd_bs <- full_karstens_model$varying %>% as_tibble %>% dplyr::filter(param == 
 estd_bs %>%
   inner_join(tibble(j=241:247, name = genera_data[mock_taxa][-8]), by="j")
 #> # A tibble: 7 × 5
-#>    value param     k     j name                
-#>    <dbl> <chr> <dbl> <dbl> <chr>               
-#> 1 -1.33  B         1   241 Pseudomonas         
-#> 2 -0.220 B         1   242 Escherichia-Shigella
-#> 3 -0.525 B         1   243 Salmonella          
-#> 4 -2.14  B         1   244 Enterococcus        
-#> 5 -2.98  B         1   245 Staphylococcus      
-#> 6 -1.64  B         1   246 Listeria            
-#> 7 -0.761 B         1   247 Bacillus
+#>   value param     k     j name                
+#>   <dbl> <chr> <dbl> <dbl> <chr>               
+#> 1 -3.72 B         1   241 Pseudomonas         
+#> 2 -2.78 B         1   242 Escherichia-Shigella
+#> 3 -2.90 B         1   243 Salmonella          
+#> 4 -4.96 B         1   244 Enterococcus        
+#> 5 -5.47 B         1   245 Staphylococcus      
+#> 6 -4.40 B         1   246 Listeria            
+#> 7 -4.08 B         1   247 Bacillus
 ```
 
 On the basis of this model, we estimate that in an equal mixture of
 *Pseudomonas aeruginosa* and our reference taxon, *L. fermentum*, we
-expect on average to observe exp(-1.33) = 0.26 *P. aeruginosa* reads for
+expect on average to observe exp(-3.72) = 0.02 *P. aeruginosa* reads for
 each *L. fermentum* read. Since all of the estimated $`\beta`$’s were
 negative, this tells us that *L. fermentum* is the most easily detected
 taxon in the mock community.
 
 Aside: The estimated values in this table are pretty similar to those
-from our paper (Section 12.3), with differences being due to different
-subsets of the data being used for fitting. Here we used all nine
-samples, whereas for Table 2 we only used two samples.
+from our paper, with differences being due to different subsets of the
+data being used for fitting. Here we used all nine samples.
 
 You can look at which other parameters were estimated as follows:
 
@@ -415,19 +429,25 @@ full_karstens_model$varying %>% pull(param) %>% unique
 ```
 
 To obtain 95% confidence intervals for the detection efficiencies, you
-can run the following… but be prepared to wait!
+can run the following. This step can take a while (proportional to
+`n_boot`), but can be parallelized across your computer’s cores using
+the package `parallel`. Using only one core, 10 bootstrap iterations
+took \<6 minutes on my 1.4 GHz Dual-Core Intel Core i7 from 2017. So, on
+a more modern machine using parallelization, even 100 iterations should
+take even less than this. Also, it’s good for you to go for a walk and
+stretch your neck occasionally – enjoy!
 
 ``` r
 full_cis <- bootstrap_ci(W,
                          alpha = 0.05, # to get 95% CIs
                          fitted_model = full_karstens_model,
-                         n_boot = 500,
+                         n_boot = 500, # 100 would probably be fine
                          parallelize = TRUE,
                          ncores = 6,
                          seed  = 4324)
 ```
 
-and you can use the following to pull out the confidence intervals
+You can use the following to pull out the confidence intervals
 
 ``` r
 full_cis$ci %>%
@@ -442,25 +462,25 @@ correct coverage. So while this is a useful uncertainty quantification
 tool, I wouldn’t put much store in the 95-percent-ness of these
 intervals, because they are only based on 9 samples.
 
-## Other considerations
-
-In the above analysis, we estimated efficiencies of all taxa relative to
-??. Furthermore, for taxon that were not present in the mock, we set
-their efficiency to be equal to the detection efficiency of ??. But how
-did we pick ?? over all the other taxa in the mock?
-
-If you’re interested, let Amy know and she’ll prioritize this.
+Side note: If you look at
+`full_karstens_model$varying %>% filter(param == "P_tilde")`, you’ll
+notice that all of the mock taxa had some non-zero estimated relative
+abundance in the contamination profile. This is not surprising, as point
+estimates for maximum likelihood estimates are rarely on the boundary of
+the parameter space. However, if you run 500 bootstraps with
+`seed = 4324` you’ll find that 5 out of the 7 of these taxa had 95%
+confidence intervals that contain zero. Go tinyvamp!
 
 ## Wrap-up
 
 I hope you found this to be helpful in setting up the `tinyvamp` model
 to analyze your dilution series! Please let me (Amy) know if you have
-any questions or would like further clarification via a GitHub issue
-(preferred), or via email.
+any questions or would like further clarification. You can do this via a
+GitHub issue (preferred), or via email.
 
 Happy estimating and experiment-designing!
 
-### References
+## References
 
 - Karstens, L., Asquith, M., Davin, S. et al. Controlling for
   Contaminants in Low-Biomass 16S rRNA Gene Sequencing Experiments.

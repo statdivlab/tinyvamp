@@ -73,137 +73,329 @@ bootstrap_ci <- function(
   n <- nrow(W)
   J <- ncol(W)
 
-  if (is.null(m)) {
-    m <- sqrt(n)
-  }
-  if (is.null(seed)) {
-    seed <- 0
-  }
+  m <- .tvamp_default_boot_m(n, m)
+  seed <- .tvamp_default_seed(seed)
+  base_wts <- .tvamp_base_weights(fitted_model, n, J)
 
-  if (is.null(fitted_model$wts)) {
-    fitted_model$wts <- rep(1, n * J)
-  }
-  wts <- fitted_model$wts
   set.seed(seed)
-  boot_seeds <- sample(1:1e8, n_boot)
+  boot_seeds <- sample.int(1e8, n_boot)
 
-  boot_results <- vector(n_boot, mode = "list")
-
-  if (!parallelize) {
-    for (boot_iter in 1:n_boot) {
-      if (verbose) {
-        message(paste0("Bootstrap iteration ", boot_iter))
-      }
-      set.seed(boot_seeds[boot_iter])
-      boot_weights <- rgamma(n, m / n)
-      boot_weights <- boot_weights / sum(boot_weights)
-      boot_weights <- rep(boot_weights, each = J)
-      boot_weights <- boot_weights * wts
-      boot_weights <- J * boot_weights / sum(boot_weights)
-
-      boot_model <- estimate_parameters(
-        W = W,
-        X = fitted_model$X,
-        Z = fitted_model$Z,
-        Z_tilde = fitted_model$Z_tilde,
-        Z_tilde_gamma_cols = fitted_model$Z_tilde_gamma_cols,
-        gammas = fitted_model$gammas,
-        gammas_fixed_indices = fitted_model$gammas_fixed_indices,
-        P = fitted_model$P,
-        P_fixed_indices = fitted_model$P_fixed_indices,
-        B = fitted_model$B,
-        B_fixed_indices = fitted_model$B_fixed_indices,
-        X_tilde = fitted_model$X_tilde,
-        P_tilde = fitted_model$P_tilde,
-        P_tilde_fixed_indices = fitted_model$P_tilde_fixed_indices,
-        gamma_tilde = fitted_model$gamma_tilde,
-        gamma_tilde_fixed_indices = fitted_model$gamma_tilde_fixed_indices,
-        alpha_tilde = fitted_model$alpha_tilde,
-        Z_tilde_list = fitted_model$Z_tilde_list,
-        barrier_t = 1, #starting value of reciprocal barrier penalty coef.
-        barrier_scale = 10, #increments for value of barrier penalty
-        max_barrier = 1e12, #maximum value of barrier_t
-        initial_conv_tol = 1000,
-        final_conv_tol = 0.1,
-        constraint_tolerance = 1e-10,
-        hessian_regularization = 0.01,
-        criterion = "Poisson",
-        profile_P = TRUE,
-        verbose = verbose,
-        wts = boot_weights,
-        profiling_maxit = 25
-      )
-
-      boot_results[[boot_iter]] <- boot_model
+  worker <- function(i) {
+    if (!parallelize && verbose) {
+      message("Bootstrap iteration ", i)
     }
-  }
-  if (parallelize) {
-    boot_weights <- lapply(1:n_boot, function(x) {
-      # set.seed(x)
-      bwts <- rgamma(n, m / n)
-      bwts <- rep(bwts, each = J)
-      bwts <- bwts * wts
-      bwts <- J * bwts / sum(bwts)
-      return(bwts)
-    })
 
-    boot_results <-
-      parallel::mclapply(
-        1:n_boot,
-        function(k) {
-          do_one_boot(
-            W = W,
-            fitted_model = fitted_model,
-            m = m,
-            seed = boot_seeds[k],
-            boot_weights = boot_weights[[k]]
-          )
-        },
-        mc.cores = ncores,
-        mc.set.seed = TRUE
-      )
-  }
-
-  boot_matrix <-
-    do.call(
-      cbind,
-      lapply(1:n_boot, function(k) {
-        matrix(
-          sqrt(m) *
-            (boot_results[[k]]$varying$value - fitted_model$varying$value),
-          ncol = 1
-        )
-      })
+    boot_wts <- .tvamp_generate_boot_weights(
+      n = n,
+      J = J,
+      m = m,
+      base_wts = base_wts,
+      seed = boot_seeds[i]
     )
 
-  if (adjust) {
-    num_nonsillyparams <- sum(fitted_model$varying$param != "gamma")
-    adjust_factor <- (n * J) / (n * J - num_nonsillyparams)
-    boot_matrix <- boot_matrix * sqrt(adjust_factor)
+    .tvamp_estimate_from_model(
+      W = W,
+      model_spec = fitted_model,
+      wts = boot_wts,
+      verbose = verbose,
+      criterion = "Poisson"
+    )
   }
 
-  lower_boot_quantiles <- apply(boot_matrix, 1, function(x) {
-    quantile(x, alpha / 2)
-  })
+  boot_results <- .tvamp_boot_apply(
+    n_boot = n_boot,
+    worker = worker,
+    parallelize = parallelize,
+    ncores = ncores
+  )
 
-  upper_boot_quantiles <- apply(boot_matrix, 1, function(x) {
-    quantile(x, 1 - alpha / 2)
-  })
+  theta_hat <- fitted_model$varying$value
+  boot_matrix <- .tvamp_boot_matrix(boot_results, theta_hat, m)
+
+  if (adjust) {
+    p <- sum(fitted_model$varying$param != "gamma")
+    boot_matrix <- boot_matrix * sqrt((n * J) / (n * J - p))
+  }
+
+  qs <- .tvamp_boot_quantiles(boot_matrix, alpha)
 
   summary_df <- fitted_model$varying
+  summary_df$lower_ci <- summary_df$value - qs$upper / sqrt(n)
+  summary_df$upper_ci <- summary_df$value - qs$lower / sqrt(n)
+  summary_df <- .tvamp_clip_probability_ci(summary_df)
 
-  summary_df$lower_ci <- summary_df$value - (1 / sqrt(n)) * upper_boot_quantiles
-  summary_df$upper_ci <- summary_df$value - (1 / sqrt(n)) * lower_boot_quantiles
-
-  summary_df$lower_ci[summary_df$param %in% c("P", "P_tilde")] <-
-    pmax(summary_df$lower_ci[summary_df$param %in% c("P", "P_tilde")], 0)
-
-  summary_df$upper_ci[summary_df$param %in% c("P", "P_tilde")] <-
-    pmin(summary_df$upper_ci[summary_df$param %in% c("P", "P_tilde")], 1)
-
-  if (return_models) {
-    return(list("ci" = summary_df, "bootstrapped_models" = boot_results))
-  } else {
-    return(list("ci" = summary_df, "bootstrapped_models" = NULL))
-  }
+  list(
+    ci = summary_df,
+    bootstrapped_models = if (return_models) boot_results else NULL
+  )
 }
+
+# bootstrap_ci <- function(
+#   W,
+#   fitted_model,
+#   n_boot,
+#   m = NULL,
+#   alpha = 0.05,
+#   parallelize = FALSE,
+#   ncores = 5,
+#   seed = NULL,
+#   return_models = FALSE,
+#   verbose = FALSE,
+#   adjust = FALSE
+# ) {
+#   n <- nrow(W)
+#   J <- ncol(W)
+
+#   m <- if (is.null(m)) sqrt(n) else m
+#   seed <- if (is.null(seed)) 0L else seed
+
+#   wts <- fitted_model$wts
+#   if (is.null(wts)) {
+#     wts <- rep(1, n * J)
+#   }
+
+#   set.seed(seed)
+#   boot_seeds <- sample.int(1e8, n_boot)
+
+#   make_boot_weights <- function(s) {
+#     set.seed(s)
+#     bwts <- rgamma(n, shape = m / n)
+#     bwts <- rep(bwts, each = J)
+#     bwts <- bwts * wts
+#     J * bwts / sum(bwts)
+#   }
+
+#   fit_once <- function(boot_weights, verbose = FALSE) {
+#     args <- list(
+#       W = W,
+#       X = fitted_model$X,
+#       Z = fitted_model$Z,
+#       Z_tilde = fitted_model$Z_tilde,
+#       Z_tilde_gamma_cols = fitted_model$Z_tilde_gamma_cols,
+#       gammas = fitted_model$gammas,
+#       gammas_fixed_indices = fitted_model$gammas_fixed_indices,
+#       P = fitted_model$P,
+#       P_fixed_indices = fitted_model$P_fixed_indices,
+#       B = fitted_model$B,
+#       B_fixed_indices = fitted_model$B_fixed_indices,
+#       X_tilde = fitted_model$X_tilde,
+#       P_tilde = fitted_model$P_tilde,
+#       P_tilde_fixed_indices = fitted_model$P_tilde_fixed_indices,
+#       gamma_tilde = fitted_model$gamma_tilde,
+#       gamma_tilde_fixed_indices = fitted_model$gamma_tilde_fixed_indices,
+#       alpha_tilde = fitted_model$alpha_tilde,
+#       Z_tilde_list = fitted_model$Z_tilde_list,
+#       barrier_t = 1,
+#       barrier_scale = 10,
+#       max_barrier = 1e12,
+#       initial_conv_tol = 1000,
+#       final_conv_tol = 0.1,
+#       constraint_tolerance = 1e-10,
+#       hessian_regularization = 0.01,
+#       criterion = "Poisson",
+#       profile_P = TRUE,
+#       verbose = verbose,
+#       wts = boot_weights,
+#       profiling_maxit = 25
+#     )
+
+#     do.call(estimate_parameters, args)
+#   }
+
+#   run_boot <- function(i) {
+#     if (!parallelize && verbose) {
+#       message("Bootstrap iteration ", i)
+#     }
+#     boot_weights <- make_boot_weights(boot_seeds[i])
+#     fit_once(boot_weights, verbose = verbose)
+#   }
+
+#   boot_results <- if (parallelize) {
+#     parallel::mclapply(
+#       X = seq_len(n_boot),
+#       FUN = run_boot,
+#       mc.cores = ncores,
+#       mc.set.seed = FALSE
+#     )
+#   } else {
+#     lapply(seq_len(n_boot), run_boot)
+#   }
+
+#   theta_hat <- fitted_model$varying$value
+
+#   boot_matrix <- vapply(
+#     boot_results,
+#     function(res) sqrt(m) * (res$varying$value - theta_hat),
+#     numeric(length(theta_hat))
+#   )
+
+#   if (adjust) {
+#     p <- sum(fitted_model$varying$param != "gamma")
+#     boot_matrix <- boot_matrix * sqrt((n * J) / (n * J - p))
+#   }
+
+#   lower_q <- apply(boot_matrix, 1, quantile, probs = alpha / 2, names = FALSE)
+#   upper_q <- apply(boot_matrix, 1, quantile, probs = 1 - alpha / 2, names = FALSE)
+
+#   summary_df <- fitted_model$varying
+#   summary_df$lower_ci <- summary_df$value - upper_q / sqrt(n)
+#   summary_df$upper_ci <- summary_df$value - lower_q / sqrt(n)
+
+#   prob_idx <- summary_df$param %in% c("P", "P_tilde")
+#   summary_df$lower_ci[prob_idx] <- pmax(summary_df$lower_ci[prob_idx], 0)
+#   summary_df$upper_ci[prob_idx] <- pmin(summary_df$upper_ci[prob_idx], 1)
+
+#   list(
+#     ci = summary_df,
+#     bootstrapped_models = if (return_models) boot_results else NULL
+#   )
+# }
+# bootstrap_ci <- function(
+#   W,
+#   fitted_model,
+#   n_boot,
+#   m = NULL,
+#   alpha = 0.05,
+#   parallelize = FALSE,
+#   ncores = 5,
+#   seed = NULL,
+#   return_models = FALSE,
+#   verbose = FALSE,
+#   adjust = FALSE
+# ) {
+#   n <- nrow(W)
+#   J <- ncol(W)
+
+#   if (is.null(m)) {
+#     m <- sqrt(n)
+#   }
+#   if (is.null(seed)) {
+#     seed <- 0
+#   }
+
+#   if (is.null(fitted_model$wts)) {
+#     fitted_model$wts <- rep(1, n * J)
+#   }
+#   wts <- fitted_model$wts
+#   set.seed(seed)
+#   boot_seeds <- sample(1:1e8, n_boot)
+
+#   boot_results <- vector(n_boot, mode = "list")
+
+#   if (!parallelize) {
+#     for (boot_iter in 1:n_boot) {
+#       if (verbose) {
+#         message(paste0("Bootstrap iteration ", boot_iter))
+#       }
+#       set.seed(boot_seeds[boot_iter])
+#       boot_weights <- rgamma(n, m / n)
+#       boot_weights <- boot_weights / sum(boot_weights)
+#       boot_weights <- rep(boot_weights, each = J)
+#       boot_weights <- boot_weights * wts
+#       boot_weights <- J * boot_weights / sum(boot_weights)
+
+#       boot_model <- estimate_parameters(
+#         W = W,
+#         X = fitted_model$X,
+#         Z = fitted_model$Z,
+#         Z_tilde = fitted_model$Z_tilde,
+#         Z_tilde_gamma_cols = fitted_model$Z_tilde_gamma_cols,
+#         gammas = fitted_model$gammas,
+#         gammas_fixed_indices = fitted_model$gammas_fixed_indices,
+#         P = fitted_model$P,
+#         P_fixed_indices = fitted_model$P_fixed_indices,
+#         B = fitted_model$B,
+#         B_fixed_indices = fitted_model$B_fixed_indices,
+#         X_tilde = fitted_model$X_tilde,
+#         P_tilde = fitted_model$P_tilde,
+#         P_tilde_fixed_indices = fitted_model$P_tilde_fixed_indices,
+#         gamma_tilde = fitted_model$gamma_tilde,
+#         gamma_tilde_fixed_indices = fitted_model$gamma_tilde_fixed_indices,
+#         alpha_tilde = fitted_model$alpha_tilde,
+#         Z_tilde_list = fitted_model$Z_tilde_list,
+#         barrier_t = 1, #starting value of reciprocal barrier penalty coef.
+#         barrier_scale = 10, #increments for value of barrier penalty
+#         max_barrier = 1e12, #maximum value of barrier_t
+#         initial_conv_tol = 1000,
+#         final_conv_tol = 0.1,
+#         constraint_tolerance = 1e-10,
+#         hessian_regularization = 0.01,
+#         criterion = "Poisson",
+#         profile_P = TRUE,
+#         verbose = verbose,
+#         wts = boot_weights,
+#         profiling_maxit = 25
+#       )
+
+#       boot_results[[boot_iter]] <- boot_model
+#     }
+#   } else {
+#     boot_weights <- lapply(1:n_boot, function(x) {
+#       # set.seed(x)
+#       bwts <- rgamma(n, m / n)
+#       bwts <- rep(bwts, each = J)
+#       bwts <- bwts * wts
+#       bwts <- J * bwts / sum(bwts)
+#       return(bwts)
+#     })
+
+#     boot_results <-
+#       parallel::mclapply(
+#         1:n_boot,
+#         function(k) {
+#           do_one_boot(
+#             W = W,
+#             fitted_model = fitted_model,
+#             m = m,
+#             seed = boot_seeds[k],
+#             boot_weights = boot_weights[[k]]
+#           )
+#         },
+#         mc.cores = ncores,
+#         mc.set.seed = TRUE
+#       )
+#   }
+
+#   boot_matrix <-
+#     do.call(
+#       cbind,
+#       lapply(1:n_boot, function(k) {
+#         matrix(
+#           sqrt(m) *
+#             (boot_results[[k]]$varying$value - fitted_model$varying$value),
+#           ncol = 1
+#         )
+#       })
+#     )
+
+#   if (adjust) {
+#     num_nonsillyparams <- sum(fitted_model$varying$param != "gamma")
+#     adjust_factor <- (n * J) / (n * J - num_nonsillyparams)
+#     boot_matrix <- boot_matrix * sqrt(adjust_factor)
+#   }
+
+#   lower_boot_quantiles <- apply(boot_matrix, 1, function(x) {
+#     quantile(x, alpha / 2)
+#   })
+
+#   upper_boot_quantiles <- apply(boot_matrix, 1, function(x) {
+#     quantile(x, 1 - alpha / 2)
+#   })
+
+#   summary_df <- fitted_model$varying
+
+#   summary_df$lower_ci <- summary_df$value - (1 / sqrt(n)) * upper_boot_quantiles
+#   summary_df$upper_ci <- summary_df$value - (1 / sqrt(n)) * lower_boot_quantiles
+
+#   summary_df$lower_ci[summary_df$param %in% c("P", "P_tilde")] <-
+#     pmax(summary_df$lower_ci[summary_df$param %in% c("P", "P_tilde")], 0)
+
+#   summary_df$upper_ci[summary_df$param %in% c("P", "P_tilde")] <-
+#     pmin(summary_df$upper_ci[summary_df$param %in% c("P", "P_tilde")], 1)
+
+#   if (return_models) {
+#     return(list("ci" = summary_df, "bootstrapped_models" = boot_results))
+#   } else {
+#     return(list("ci" = summary_df, "bootstrapped_models" = NULL))
+#   }
+# }

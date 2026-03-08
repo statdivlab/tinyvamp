@@ -5,14 +5,39 @@
 In this vignette, we will walk through how to use `tinyvamp` to estimate
 and compare detection efficiencies across batches or experiments. We
 will consider the Phase 2 data of Costea et al. (2017), who spiked-in a
-synthetic community to 10 samples, which were then sequenced using three
-shotgun metagenomic sequencing experimental protocols (protocols H, Q
-and W). Taxon abundances were also estimated using flow cytometry.
+10-member synthetic community to 10 samples, which were then sequenced
+using three shotgun metagenomic sequencing experimental protocols
+(protocols H, Q and W). Abundances were also measured using flow
+cytometry.
 
-Our analysis here will estimate the detection efficiencies of the three
-shotgun protocols compared to flow cytometry. We will also test the null
-hypothesis that detection efficiencies of the three shotgun protocols
-are the same.
+Specifically, we will demonstrate how to fit the following model:
+``` math
+\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+```
+where
+
+- $`p_{i j}`$ is the unknown relative abundance of taxon $`j`$ in sample
+  $`i`$. We constrain
+  $`\mathbf{p}_i = \mathbf{p}\in \mathbb{S}^{10 - 1}`$ for all $`i`$,
+  where $`\mathbf{p}`$ is the composition of the 10-taxa synthetic
+  community spiked into all samples.
+- $`\boldsymbol{\beta}`$ reflects differential detection between the
+  four measurement approaches.
+  $`\boldsymbol{\beta} \in \mathbb{R}^{3\times10}`$ are unknown, with
+  the exception of $`\boldsymbol{\beta}_{\cdot 10} = \mathbf{0}_3`$ for
+  identifiability. Under this model, $`\text{exp}(\beta_{1j})`$,
+  $`\text{exp}(\beta_{1j} + \beta_{2j})`$, and
+  $`\text{exp}(\beta_{1j} + \beta_{3j})`$ give the degree of over- or
+  under-detection of taxon $`j`$ relative to taxon 10 under protocols H,
+  Q, and W, respectively, using flow cytometry as the reference
+  protocol.
+
+In addition to estimating $`\mathbf{p}`$ and $`\boldsymbol{\beta}`$, we
+will also test the null hypothesis that detection efficiencies of the
+three shotgun protocols are the same ($`H_0: \beta_{qj} = 0`$ for
+$`q  = 2, 3`$ and all $`j`$).
 
 Because of its flexibility, fitting a model using `tinyvamp` involves
 specifying a lot of parameters. The focus of this vignette will
@@ -28,22 +53,10 @@ We will start by loading the relevant packages.
 
 ``` r
 library(tidyverse)
-#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#> ✔ dplyr     1.1.4     ✔ readr     2.1.6
-#> ✔ forcats   1.0.1     ✔ stringr   1.6.0
-#> ✔ ggplot2   4.0.1     ✔ tibble    3.3.0
-#> ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-#> ✔ purrr     1.2.0     
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(tinyvamp)
-#> Loading required package: cir
-#> Loading required package: fastnnls
-#> Loading required package: logsum
-#> Loading required package: numDeriv
-#> Loading required package: parallel
+library(dplyr)
+library(ggplot2)
+filter <- dplyr::filter
 ```
 
 Now let’s load the relevant data and inspect it. This dataset contains
@@ -127,8 +140,8 @@ W <- species_by_sample %>%
 colnames(W) <- species_by_sample$Taxon
 ```
 
-Because it’s a matrix, typing `W` will spew out a bunch of numbers – but
-feel free to check it out in an interactive environment!
+Because it’s a matrix, printing `W` will display the full observation
+matrix. Feel free to check it out in an interactive environment!
 
 ## Specify sample-by-specimen and other design matrices
 
@@ -163,12 +176,20 @@ protocol_df
 ```
 
 There are lots of different ways we could set up our comparisons between
-protocols. For example, we could estimate detection efficiencies with
+protocols. For example, we *could* estimate detection efficiencies with
 respect to the flow cytometry measurements. That is, we could estimate
-detection effects for protocol H vs flow cytometry; protocol W vs flow
+detection effects for protocol H vs flow cytometry; protocol Q vs flow
 cytometry; protocol W vs flow cytometry (of course, we would get a
-different estimate of the detection effects for each taxon). Here’s how
-we could create that matrix:
+different estimate of the detection effects for each taxon). That would
+correspond to this model:
+
+``` math
+\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from seq. method H}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+```
+
+Here’s how we would create that matrix:
 
 ``` r
 X <- protocol_df %>%
@@ -176,10 +197,8 @@ X <- protocol_df %>%
          qq = ifelse(Protocol == "Q" & !is.na(Protocol), 1, 0),
          ww = ifelse(Protocol == "W" & !is.na(Protocol), 1, 0)) %>% 
   select(hh, qq, ww) %>%
-  as.matrix
+  as.matrix()   # convert to numeric matrix required by tinyvamp
 ```
-
-TODO(AW) can we remove the as.matrix?
 
 However, we are interested in assessing the evidence against detection
 efficiencies being the same between protocols H, Q and W. To make our
@@ -189,8 +208,16 @@ variable as well as a protocol Q variable and a protocol W variable. The
 intercept variable equals 1 for all sequencing protocols, and the Q
 variable equals 1 for only samples sequenced with the protocol Q and
 zero for all other samples. You could also think of the intercept as an
-indicator for “this sample was sequenced”. We’re going to take those
-three variables as our $`\mathbf{X}`$ matrix.
+indicator for “this sample was sequenced”. This is exactly the model we
+described at the beginning of this vignette:
+
+``` math
+\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+```
+
+Here’s how we create that matrix:
 
 ``` r
 X <- protocol_df %>%
@@ -203,29 +230,31 @@ X <- protocol_df %>%
 
 By parameterizing the model this way, we can test whether detection
 efficiencies being the same between protocols H, Q and W by testing the
-hypothesis $`\beta_{Q} = \beta_{W} = \mathbf{0}`$. (This may be
-clarified below – so if you’re confused, dear reader, read on!)
+hypothesis $`\beta_{Q\cdot} = \beta_{W\cdot} = \mathbf{0}`$. (This may
+be clarified below – so if you’re confused, dear reader, read on!)
 
-Since $`\mathbf{X}`$ and $`\mathbf{\beta}`$ go together in the model,
-lets also initialize our estimate of $`\mathbf{\beta}`$, and tell the
-model what we know about $`\mathbf{\beta}`$. Let initialize the
-estimation algorithm at “all taxa have the same detection efficiencies
-under all protocols”:
+Since $`\mathbf{X}`$ and $`\boldsymbol{\beta}`$ go together in the
+model, lets also initialize our estimate of $`\boldsymbol{\beta}`$, and
+tell the model what we know about $`\boldsymbol{\beta}`$. Let initialize
+the estimation algorithm at “all taxa have the same detection
+efficiencies under all protocols”:
 
 ``` r
-B <- matrix(0, ncol = 10, nrow = 3)
+J <- ncol(W) ## here, 10
+B <- matrix(0, ncol = J, nrow = 3)
 ```
 
 (Remember that there are 10 taxa and 3 protocol variables: Intercept,
 Protocol Q and Protocol W)
 
-What do we know about $`\mathbf{\beta}`$? Nothing, right? Well, almost.
-We always need to choose which taxon we’re comparing our efficiencies
-against. Let’s choose the last taxon, *Yersinia pseudotuberculosis*.
+What do we know about $`\boldsymbol{\beta}`$? Nothing, right? Well,
+almost. We always need to choose which taxon we’re comparing our
+efficiencies against. Let’s choose the last taxon, *Yersinia
+pseudotuberculosis*.
 
 ``` r
-B_fixed_indices <- matrix(FALSE, ncol = 10,nrow = 3)
-B_fixed_indices[,10] <- TRUE
+B_fixed_indices <- matrix(FALSE, ncol = J, nrow = 3)
+B_fixed_indices[, J] <- TRUE
 ```
 
 Under this parametrization and constraints, we interpret
@@ -247,7 +276,8 @@ Here, there is only one specimen – the synthetic community that was
 spiked-in to every sample. So here’s our $`\mathbf{Z}`$:
 
 ``` r
-Z <- matrix(1, nrow = 30, ncol = 1)
+nn <- nrow(W)
+Z <- matrix(1, nrow = nn, ncol = 1)
 ```
 
 We now need to initialize our relative abundance matrix $`\mathbf{p}`$,
@@ -256,8 +286,8 @@ from the flow cytometry data, and tell the algorithm that we don’t know
 any of the entries of $`\mathbf{p}`$.
 
 ``` r
-P <- matrix(W[1,]/sum(W[1,]),nrow =1, ncol = 10)
-P_fixed_indices <- matrix(FALSE,nrow = 1, ncol = 10)
+P <- matrix(W[1,]/sum(W[1,]), nrow = 1, ncol = J)
+P_fixed_indices <- matrix(FALSE, nrow = 1, ncol = J)
 ```
 
 Let’s tell `tinyvamp` that we don’t know the sample intensities
@@ -284,7 +314,7 @@ P_tilde_fixed_indices <- matrix(TRUE,nrow = 1, ncol = 10)
 X_tilde <- matrix(0, ncol = 3, nrow= 1)
 ```
 
-## Fit full and null models
+## Fitting the model
 
 Woohoo! It’s time to fit the model.
 
@@ -311,9 +341,10 @@ full_model$optimization_status
 #> [1] "Converged"
 ```
 
-Woohoo, done! Pretty fast considering the number of parameters in this
-model (67). For this analysis we just use the default optimization
-settings, but you can play around with them and learn more through
+Woohoo, done! The model converges quickly (\<1 second on my 8 y.o.
+computer) despite the relatively large number of parameters (67). For
+this analysis we just use the default optimization settings, but you can
+play around with them and learn more through
 [`?estimate_parameters`](https://statdivlab.github.io/tinyvamp/reference/estimate_parameters.md)
 
 `full_model` is a list that contains a bunch of information. You can
@@ -338,10 +369,72 @@ full_model$varying %>% as_tibble
 #> # ℹ 57 more rows
 ```
 
-TODO(picture!)
+Let’s visually compare the sequencing protocols with respect to flow
+cytometry. We have to be a bit careful here to think about our
+parametrization: remember that $`\text{exp}(\beta_{1j})`$,
+$`\text{exp}(\beta_{1j} + \beta_{2j})`$, and
+$`\text{exp}(\beta_{1j} + \beta_{3j})`$ give the degree of over- or
+under-detection of taxon $`j`$ relative to taxon 10 under protocols H,
+Q, and W, respectively, using flow cytometry as the reference protocol.
+That is, to compare to flow cytometry, we want to look at
+$`\beta_{1j} + \beta_{2j}`$, not just $`\beta_{2j}`$. Let’s set that up:
 
-Now, to test… we need to tell tinyvamp what the null hypothesis is. We
-do this as follows:
+``` r
+the_settings <- X %>% as_tibble %>% dplyr::distinct()
+fitted_detectabilities <- (X %*% full_model$B) %>% as_tibble %>% dplyr::distinct()
+#> Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+#> `.name_repair` is omitted as of tibble 2.0.0.
+#> ℹ Using compatibility `.name_repair`.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
+colnames(fitted_detectabilities) <- colnames(W)
+the_betahats <- the_settings %>% 
+  mutate("setting" = ifelse(intercept == 0, "Flow cytometry",
+                            ifelse(qq == 0 & ww == 0, "H relative to FC",
+                                   ifelse(qq == 1 & ww == 0, "Q relative to FC",
+                                          "W relative to FC"))), .before = 1) %>% 
+  bind_cols(fitted_detectabilities) %>% 
+  select(-intercept, -qq, -ww) %>% 
+  pivot_longer(-setting)
+the_betahats
+#> # A tibble: 40 × 3
+#>    setting        name                        value
+#>    <chr>          <chr>                       <dbl>
+#>  1 Flow cytometry Blautia_hansenii                0
+#>  2 Flow cytometry Clostridium_difficile           0
+#>  3 Flow cytometry Clostridium_perfringens         0
+#>  4 Flow cytometry Clostridium_saccharolyticum     0
+#>  5 Flow cytometry Fusobacterium_nucleatum         0
+#>  6 Flow cytometry Lactobacillus_plantarum         0
+#>  7 Flow cytometry Prevotella_melaninogenica       0
+#>  8 Flow cytometry Salmonella_enterica             0
+#>  9 Flow cytometry Vibrio_cholerae                 0
+#> 10 Flow cytometry Yersinia_pseudotuberculosis     0
+#> # ℹ 30 more rows
+the_betahats %>% 
+  ggplot(aes(x = name, y = value, color = setting)) +
+  geom_point() +
+  labs(
+    y = "Estimated log-detection efficiency\n(relative to Y. pseudotuberculosis)",
+    x = "",
+  ) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+![](compare-experiments_files/figure-html/fig-fullwidth-1.png)
+
+## Testing the hypothesis of equal detectability
+
+Testing whether detection efficiencies are identical across protocols H,
+Q, and W corresponds to the hypothesis $`\beta_{Q,j} = \beta_{W,j} = 0`$
+for all $`j = 1, \ldots, J-1`$. In other words, protocols Q and W don’t
+differ from protocol H in their detectabilities, where the
+detectabilities are relative to flow cytometry.
+
+To test this hypothesis, we need to tell tinyvamp what the null
+hypothesis is. We do this as follows:
 
 ``` r
 ### Create null model specification for test
@@ -351,360 +444,33 @@ null_param$B[2:3,] <- 0
 null_param$B_fixed_indices[2:3,] <- TRUE
 ```
 
-This next step can take ages! Good to parallelize if possible.
+We then refit the model under the null to obtain the sampling
+distribution of the test statistics under the null, and compare the
+observed test statistics to this null distribution. The wall time of
+this step is proportional to `n_boot`, but can be parallelized across
+your computer’s cores using the package `parallel`. Using only one core,
+10 bootstrap iterations took less than 35 seconds on my 1.4 GHz
+Dual-Core Intel Core i7 from 2017. So, on a more modern machine using
+parallelization, even 100 iterations should take even less than a
+minute. Take this minute to stretch your neck and hands, or look at a
+photo of your favourite cat.
 
 ``` r
-# bootstrap_test <-  bootstrap_lrt(W = W,
-#                                  fitted_model= full_model,
-#                                  null_param = null_param,
-#                                  n_boot = 1000,
-#                                  ncores = 5, 
-#                                  parallelize = TRUE)
+bootstrap_test <-  
+  bootstrap_lrt(W = W,
+                fitted_model= full_model,
+                null_param = null_param,
+                n_boot = 500, # do 1000 for a paper, 100 for a first look
+                ncores = 5,
+                parallelize = TRUE)
 ```
 
-Fit reparametrization with $`X_i = [1_H 1_Q 1_W]`$ to (more easily) get
-CIs for protocol-specific effects (also can bootstrap from original
-model, but currently a bit more involved to pull out CIs for quantities
-of form $`A%*%beta`$ than for beta itself)
+You can obtain the p-value for this test via `bootstrap_test$boot_pval`.
+Here, it’s definitely rejected – not one bootstrapped test statistic
+under the null came close to our observed test statistic.
 
-``` r
-X_repar <- X
-X_repar[,1] <- X_repar[,1] - X_repar[,2] - X_repar[,3]
-full_reparam  <-
-  estimate_parameters(W = W,
-                      X = X_repar,
-                      Z = Z,
-                      Z_tilde = Z_tilde,
-                      Z_tilde_gamma_cols = 1,
-                      gammas = gammas,
-                      gammas_fixed_indices = gammas_fixed_indices,
-                      P = P,
-                      P_fixed_indices = P_fixed_indices,
-                      B = B,
-                      B_fixed_indices = B_fixed_indices,
-                      X_tilde = X_tilde,
-                      P_tilde = P_tilde,
-                      P_tilde_fixed_indices = P_tilde_fixed_indices,
-                      gamma_tilde = gamma_tilde,
-                      gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,
-                      alpha_tilde = NULL,
-                      Z_tilde_list = NULL,
-                      barrier_t = 1, #starting value of reciprocal barrier penalty coef.
-                      barrier_scale = 10, #increments for value of barrier penalty
-                      max_barrier = 1e12, #maximum value of barrier_t
-                      initial_conv_tol = 1000,
-                      final_conv_tol = 0.1,
-                      constraint_tolerance = 1e-10,
-                      hessian_regularization = 0.01,
-                      criterion = "Poisson",
-                      profile_P = FALSE,
-                      profiling_maxit = 25,
-                      wts = NULL,
-                      verbose = TRUE)
-#> Evaluating criterion...
-#> Calculating step direction...
-#>   Critical value is 59488.6958740328
-#>   Sum of squared gradients is  20759219.2187245
-#> Calculating step direction...
-#>   Critical value is 2714.37060243887
-#>   Sum of squared gradients is  1537213.03209714
-#> Calculating step direction...
-#>   Critical value is 962.779632347674
-#>   Sum of squared gradients is  49019.0031205382
-#> Calculating step direction...
-#>   Critical value is 518.440570998821
-#>   Sum of squared gradients is  1170.93895446302
-#> Calculating step direction...
-#>   Critical value is 439.547588563884
-#>   Sum of squared gradients is  334.451820830091
-#> Fit barrier sub-problem with t = 1.
-#> Calculating step direction...
-#>   Critical value is 404.262618866065
-#>   Sum of squared gradients is  63.8567779332572
-#> Fit barrier sub-problem with t = 10.
-#> Calculating step direction...
-#>   Critical value is 398.535007077456
-#>   Sum of squared gradients is  5.30566317160845
-#> Fit barrier sub-problem with t = 100.
-#> Calculating step direction...
-#>   Critical value is 397.933004088407
-#>   Sum of squared gradients is  0.964654574340931
-#> Fit barrier sub-problem with t = 1000.
-#> Calculating step direction...
-#>   Critical value is 397.9034817215
-#>   Sum of squared gradients is  0.130878831070015
-#> Fit barrier sub-problem with t = 10000.
-#> Calculating step direction...
-#>   Critical value is 397.901192580367
-#>   Sum of squared gradients is  0.00282838743392096
-#> Fit barrier sub-problem with t = 1e+05.
-#> Calculating step direction...
-#>   Critical value is 397.900963467638
-#>   Sum of squared gradients is  1.8364527831256e-05
-#> Fit barrier sub-problem with t = 1e+06.
-#> Calculating step direction...
-#>   Critical value is 397.900940558228
-#>   Sum of squared gradients is  2.01537690139673e-06
-#> Fit barrier sub-problem with t = 1e+07.
-#> Calculating step direction...
-#>   Critical value is 397.900938614484
-#>   Sum of squared gradients is  1.23929818248609e-06
-#> Fit barrier sub-problem with t = 1e+08.
-#> Calculating step direction...
-#>   Critical value is 397.900937789791
-#>   Sum of squared gradients is  1.05552458380137e-06
-#> Fit barrier sub-problem with t = 1e+09.
-#> Calculating step direction...
-#>   Critical value is 397.900937766926
-#>   Sum of squared gradients is  9.37277653528867e-07
-#> Fit barrier sub-problem with t = 1e+10.
-#> Calculating step direction...
-#>   Critical value is 397.900937764639
-#>   Sum of squared gradients is  9.37278813918831e-07
-#> Fit barrier sub-problem with t = 1e+11.
-#> Calculating step direction...
-#>   Critical value is 397.900937764411
-#>   Sum of squared gradients is  9.3727893176865e-07
-#> Fit barrier sub-problem with t = 1e+12.
-# 
-# full_cis <- bootstrap_ci(W,
-#                          fitted_model = full_reparam,
-#                          n_boot=1000,
-#                          m = NULL,
-#                          alpha = 0.05,
-#                          parallelize = TRUE,
-#                          ncores = 5,
-#                          seed = 3423,
-#                          return_models = FALSE,
-#                          verbose = FALSE
-#                          
-# )
-# 
-# taxa <- colnames(W)
-# taxa <- lapply(taxa,
-#                function(x) strsplit(x,"_") %>%
-#                  (function(y) paste(substr(y[[1]][1],1,1),". ",
-#                                     y[[1]][2],sep = "",collapse = ""))) %>%
-#   do.call(c,.)
-# 
-# full_cis$ci %>%
-#   filter(param == "B") %>%
-#   mutate(Protocol = c("H","Q","W")[k],
-#          Estimate = round(value,2)) %>%
-#   mutate(Upper = round(upper_ci,2),
-#          Lower = round(lower_ci,2),
-#          Taxon = rep(taxa[1:9],3)) %>%
-#   dplyr::select(Protocol, Taxon, Estimate, Lower, Upper) %>%
-#   mutate(Estimate = apply(cbind(Estimate,Lower,Upper),
-#                           1, function(x) paste(x[1]," (", x[2], " - ", x[3], ")",
-#                                                sep = "",
-#                                                collapse = ""))) %>%
-#   select(c(Protocol, Taxon, Estimate)) %>%
-#   pivot_wider(id_cols = Taxon, names_from = Protocol,
-#               values_from = Estimate) %>%
-#   knitr::kable(format = "latex")
-# 
-```
-
-## 10-fold cross-validation
-
-``` r
-# 
-# # construct folds
-# folds <- vector(10, mode = "list")
-# available <- 2:30
-# unique_individuals <- c(1:8,"M")
-# 
-# for(i in 1:9){
-#   folds[[i]] <- which(individuals == unique_individuals[i]) +1
-# }
-# 
-# folds[[10]] <- which(individuals %in% c("A","B")) +1
-# 
-# full_cv <- vector(10, mode = "list")
-# null_cv <- vector(10, mode = "list")
-# for(whichfoldout in 1:10){
-#   print(whichfoldout)
-#   heldout <- folds[[whichfoldout]]
-#   nheldout <- length(heldout)
-#   Z_cv <- Z
-#   Z_cv <- cbind(Z_cv - Z_cv*(1:30 %in% heldout))
-#   P_cv <- P
-#   P_fixed_indices_cv <- P_fixed_indices
-#   for(k in 1:nheldout){
-#     Z_cv <- cbind(Z_cv,as.numeric(1:30 == heldout[k]))
-#     P_cv <- rbind(P_cv,P)
-#     P_fixed_indices_cv <- rbind(P_fixed_indices_cv,
-#                                 P_fixed_indices)
-#   }
-#   
-#   full_cv[[whichfoldout]]  <-
-#     estimate_parameters(W = W,
-#                         X = X,
-#                         Z = Z_cv,
-#                         Z_tilde = Z_tilde,
-#                         Z_tilde_gamma_cols = 1,
-#                         gammas = gammas,
-#                         gammas_fixed_indices = gammas_fixed_indices,
-#                         P = P_cv,
-#                         P_fixed_indices = P_fixed_indices_cv,
-#                         B = B,
-#                         B_fixed_indices = B_fixed_indices,
-#                         X_tilde = X_tilde,
-#                         P_tilde = P_tilde,
-#                         P_tilde_fixed_indices = P_tilde_fixed_indices,
-#                         gamma_tilde = gamma_tilde,
-#                         gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,
-#                         alpha_tilde = NULL,
-#                         Z_tilde_list = NULL,
-#                         barrier_t = 1, #starting value of reciprocal barrier penalty coef.
-#                         barrier_scale = 10, #increments for value of barrier penalty
-#                         max_barrier = 1e12, #maximum value of barrier_t
-#                         initial_conv_tol = 1000,
-#                         final_conv_tol = 0.1,
-#                         constraint_tolerance = 1e-10,
-#                         hessian_regularization = 0.01,
-#                         criterion = "Poisson",
-#                         profile_P = FALSE,
-#                         profiling_maxit = 25,
-#                         wts = NULL,
-#                         verbose = FALSE)
-#   
-#   null_cv[[whichfoldout]]  <-
-#     estimate_parameters(W = W,
-#                         X = X[,1,drop = FALSE],
-#                         Z = Z_cv,
-#                         Z_tilde = Z_tilde,
-#                         Z_tilde_gamma_cols = 1,
-#                         gammas = gammas,
-#                         gammas_fixed_indices = gammas_fixed_indices,
-#                         P = P_cv,
-#                         P_fixed_indices = P_fixed_indices_cv,
-#                         B = B[1,,drop = FALSE],
-#                         B_fixed_indices = B_fixed_indices[1,,drop = FALSE],
-#                         X_tilde = X_tilde[,1,drop = FALSE],
-#                         P_tilde = P_tilde,
-#                         P_tilde_fixed_indices = P_tilde_fixed_indices,
-#                         gamma_tilde = gamma_tilde,
-#                         gamma_tilde_fixed_indices = gamma_tilde_fixed_indices,
-#                         alpha_tilde = NULL,
-#                         Z_tilde_list = NULL,
-#                         barrier_t = 1, #starting value of reciprocal barrier penalty coef.
-#                         barrier_scale = 10, #increments for value of barrier penalty
-#                         max_barrier = 1e12, #maximum value of barrier_t
-#                         initial_conv_tol = 1000,
-#                         final_conv_tol = 0.1,
-#                         constraint_tolerance = 1e-10,
-#                         hessian_regularization = 0.01,
-#                         criterion = "Poisson",
-#                         profile_P = FALSE,
-#                         profiling_maxit = 25,
-#                         wts = NULL,
-#                         verbose = FALSE)
-#   
-# }
-# 
-# full_cv_predictions <- lapply(1:10,
-#                               function(x)
-#                                 full_cv[[x]]$varying[
-#                                   full_cv[[x]]$varying$param == "P"&
-#                                     full_cv[[x]]$varying$k>1,])
-# 
-# for(i in 1:10){
-#   full_cv_predictions[[i]]$k <- sapply(full_cv_predictions[[i]]$k,
-#                                        function(x) folds[[i]][x - 1])
-#   
-# }
-# 
-# full_cv_predictions <- do.call(rbind,full_cv_predictions)
-# fc_values <- W[1,]/sum(W[1,])
-# full_cv_predictions$fc_value <- sapply(full_cv_predictions$j,
-#                                        function(d) fc_values[d])
-# full_cv_predictions$protocol <-
-#   sapply(full_cv_predictions$k,
-#          function(d) protocols[d-1]) #  d - 1 bc k starts at 2
-# #  (k = 1 is fc data)
-# 
-# 
-# full_cv_predictions$specimen <-
-#   sapply(full_cv_predictions$k,
-#          function(d) individuals[d - 1]) #  d - 1 bc k starts at 2
-# #  (k = 1 is fc data)
-# 
-# 
-# null_cv_predictions <- lapply(1:10,
-#                               function(x)
-#                                 null_cv[[x]]$varying[
-#                                   null_cv[[x]]$varying$param == "P"&
-#                                     null_cv[[x]]$varying$k>1,])
-# 
-# for(i in 1:10){
-#   null_cv_predictions[[i]]$k <- sapply(null_cv_predictions[[i]]$k,
-#                                        function(x) folds[[i]][x - 1])
-#   
-# }
-# 
-# null_cv_predictions <- do.call(rbind,null_cv_predictions)
-# fc_values <- W[1,]/sum(W[1,])
-# null_cv_predictions$fc_value <- sapply(null_cv_predictions$j,
-#                                        function(d) fc_values[d])
-# null_cv_predictions$protocol <-
-#   sapply(null_cv_predictions$k,
-#          function(d) protocols[d -1 ]) #  d - 1 bc k starts at 2 (k = 1 is fc data)
-# 
-# null_cv_predictions$specimen <-
-#   sapply(null_cv_predictions$k,
-#          function(d) individuals[d - 1]) #  d - 1 bc k starts at 2 (k = 1 is fc data)
-# null_cv_predictions$model <- "Null Model"
-# full_cv_predictions$model <- "Full Model"
-# 
-# W_prop <- W[-1,]
-# for(i in 1:nrow(W_prop)){
-#   W_prop[i,] <- W_prop[i,]/sum(W_prop[i,])
-# }
-# 
-# naive_predictions <- null_cv_predictions[numeric(0),]
-# 
-# for(i in 1:nrow(W_prop)){
-#   protocol <- protocols[i]
-#   specimen <- individuals[i]
-#   for(j in 1:ncol(W)){
-#     naive_predictions <- rbind(naive_predictions,
-#                                data.frame(value = W_prop[i,j],
-#                                           param = "P",
-#                                           k = i,
-#                                           j  = j,
-#                                           fc_value = fc_values[j],
-#                                           protocol = protocol,
-#                                           specimen = specimen,
-#                                           model = "Plug-in"))
-#   }
-# }
-# 
-# 
-# 
-# 
-# rbind(null_cv_predictions,full_cv_predictions,
-#       naive_predictions) %>%
-#   mutate(protocol = sapply(protocol, function(x) paste("Protocol ",x,
-#                                                        sep = "",
-#                                                        collapse = ""))) %>%
-#   # filter(!is.na(protocol)) %>% #why would protocol be NA? Check!
-#   ggplot() +
-#   geom_point(aes(x = fc_value, y = value, color= specimen),
-#              size = .5) +
-#   geom_line(aes(x = fc_value, y = value, color = specimen,
-#                 group = as.factor(k)), size = .5) +
-#   geom_abline(aes(intercept = 0, slope = 1), linetype = 2) +
-#   facet_grid(model~protocol,scales = "free_y") +
-#   scale_color_grey() +
-#   scale_y_log10() +
-#   scale_x_log10() +
-#   theme_bw() +
-#   guides(color=guide_legend(title="Specimen")) +
-#   xlab("Relative Abundance Measured by Flow Cytometry") +
-#   ylab("Cross-Validated Estimated Relative Abundance")
-```
+Ok! That’s it for estimation and testing of detectabilities. Let us know
+your questions, and thanks for using `tinyvamp`!
 
 ### References
 

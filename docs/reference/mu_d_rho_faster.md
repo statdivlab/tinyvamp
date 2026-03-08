@@ -65,6 +65,10 @@ mu_d_rho_faster(
   sum(fixed relative abundances in row k of P) Z_tilde to scale by
   exp(gamma); NULL if no columns to be scaled
 
+- proportion_scale:
+
+  No idea
+
 ## Value
 
 A derivative d mu_i / d rho_k

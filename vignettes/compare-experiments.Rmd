@@ -19,11 +19,18 @@ knitr::opts_chunk$set(
 
 # Scope and purpose
 
-TODO clarify model and interpretation of beta
+In this vignette, we will walk through how to use `tinyvamp` to estimate and compare detection efficiencies across batches or experiments. We will consider the Phase 2 data of Costea et al. (2017), who spiked-in a 10-member synthetic community to 10 samples, which were then sequenced using three shotgun metagenomic sequencing experimental protocols (protocols H, Q and W). Abundances were also measured using flow cytometry. 
 
-In this vignette, we will walk through how to use `tinyvamp` to estimate and compare detection efficiencies across batches or experiments. We will consider the Phase 2 data of Costea et al. (2017), who spiked-in a synthetic community to 10 samples, which were then sequenced using three shotgun metagenomic sequencing experimental protocols (protocols H, Q and W). Taxon abundances were also estimated using flow cytometry. 
-
-Our analysis here will estimate the detection efficiencies of the three shotgun protocols compared to flow cytometry. We will also test the null hypothesis that detection efficiencies of the three shotgun protocols are the same. 
+Specifically, we will demonstrate how to fit the following model: 
+  \begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+  where 
+  
+  - $p_{i j}$ is the unknown relative abundance of taxon $j$ in sample $i$. We constrain $\mathbf{p}_i = \mathbf{p}\in \mathbb{S}^{10 - 1}$ for all $i$, where $\mathbf{p}$ is the composition of the 10-taxa synthetic community spiked into all samples. 
+  - $\boldsymbol{\beta}$ reflects differential detection between the four measurement approaches. $\boldsymbol{\beta} \in \mathbb{R}^{3\times10}$ are unknown, with the exception of $\boldsymbol{\beta}_{\cdot 10} = \mathbf{0}_3$ for identifiability. Under this model, $\text{exp}(\beta_{1j})$, $\text{exp}(\beta_{1j} + \beta_{2j})$, and $\text{exp}(\beta_{1j} + \beta_{3j})$ give the degree of over- or under-detection of taxon $j$ relative to taxon 10 under protocols H, Q, and W, respectively, using flow cytometry as the reference protocol. 
+  
+In addition to estimating $\mathbf{p}$ and $\boldsymbol{\beta}$, we will also test the null hypothesis that detection efficiencies of the three shotgun protocols are the same ($H_0: \beta_{qj} = 0$ for $q  = 2, 3$ and all $j$). 
 
 Because of its flexibility, fitting a model using `tinyvamp` involves specifying a lot of parameters. The focus of this vignette will therefore be on *how* we set up the model to estimate detection efficiencies, rather than *why* we set up the model in this way. Please see the tinyvamp paper and references therein for those details!
 
@@ -109,7 +116,13 @@ protocol_df <- W %>%
 protocol_df
 ```
 
-There are lots of different ways we could set up our comparisons between protocols. For example, we could  estimate detection efficiencies with respect to the flow cytometry measurements. That is, we could estimate detection effects for protocol H vs flow cytometry; protocol Q vs flow cytometry; protocol W vs flow cytometry (of course, we would get a different estimate of the detection effects for each taxon). Here's how we could create that matrix: 
+There are lots of different ways we could set up our comparisons between protocols. For example, we *could* estimate detection efficiencies with respect to the flow cytometry measurements. That is, we could estimate detection effects for protocol H vs flow cytometry; protocol Q vs flow cytometry; protocol W vs flow cytometry (of course, we would get a different estimate of the detection effects for each taxon). That would correspond to this model:
+
+  \begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from seq. method H}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+
+Here's how we would create that matrix: 
 
 ```{r}
 X <- protocol_df %>%
@@ -120,7 +133,13 @@ X <- protocol_df %>%
   as.matrix()   # convert to numeric matrix required by tinyvamp
 ```
 
-However, we are interested in assessing the evidence against detection efficiencies being the same between protocols H, Q and W. To make our lives easy for testing this hypothesis later, we're going to estimate the model slightly differently: we're going to create a "intercept" variable as well as a protocol Q variable and a protocol W variable. The intercept variable equals 1 for all sequencing protocols, and the Q variable equals 1 for only samples sequenced with the protocol Q and zero for all other samples. You could also think of the intercept as an indicator for "this sample was sequenced". We're going to take those three variables as our $\mathbf{X}$ matrix. 
+However, we are interested in assessing the evidence against detection efficiencies being the same between protocols H, Q and W. To make our lives easy for testing this hypothesis later, we're going to estimate the model slightly differently: we're going to create a "intercept" variable as well as a protocol Q variable and a protocol W variable. The intercept variable equals 1 for all sequencing protocols, and the Q variable equals 1 for only samples sequenced with the protocol Q and zero for all other samples. You could also think of the intercept as an indicator for "this sample was sequenced". This is exactly the model we described at the beginning of this vignette:
+
+  \begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}
+
+Here's how we create that matrix: 
 
 ```{r}
 X <- protocol_df %>%
@@ -133,7 +152,7 @@ X <- protocol_df %>%
 
 By parameterizing the model this way, we can test whether detection efficiencies being the same between protocols H, Q and W by testing the hypothesis $\beta_{Q\cdot} = \beta_{W\cdot} = \mathbf{0}$. (This may be clarified below -- so if you're confused, dear reader, read on!)
 
-Since $\mathbf{X}$ and $\mathbf{\beta}$ go together in the model, lets also initialize our estimate of $\mathbf{\beta}$, and tell the model what we know about $\mathbf{\beta}$. Let initialize the estimation algorithm at "all taxa have the same detection efficiencies under all protocols": 
+Since $\mathbf{X}$ and $\boldsymbol{\beta}$ go together in the model, lets also initialize our estimate of $\boldsymbol{\beta}$, and tell the model what we know about $\boldsymbol{\beta}$. Let initialize the estimation algorithm at "all taxa have the same detection efficiencies under all protocols": 
 
 ```{r}
 J <- ncol(W) ## here, 10
@@ -142,7 +161,7 @@ B <- matrix(0, ncol = J, nrow = 3)
 
 (Remember that there are 10 taxa and 3 protocol variables: Intercept, Protocol Q and Protocol W)
 
-What do we know about $\mathbf{\beta}$? Nothing, right? Well, almost. We always need to choose which taxon we're comparing our efficiencies against. Let's choose the last taxon, *Yersinia pseudotuberculosis*. 
+What do we know about $\boldsymbol{\beta}$? Nothing, right? Well, almost. We always need to choose which taxon we're comparing our efficiencies against. Let's choose the last taxon, *Yersinia pseudotuberculosis*. 
 
 ```{r}
 B_fixed_indices <- matrix(FALSE, ncol = J, nrow = 3)
@@ -188,7 +207,7 @@ P_tilde_fixed_indices <- matrix(TRUE,nrow = 1, ncol = 10)
 X_tilde <- matrix(0, ncol = 3, nrow= 1)
 ``` 
 
-# Fit full and null models 
+# Fitting the model
 
 Woohoo! It's time to fit the model. 
 
@@ -214,7 +233,7 @@ full_model <- estimate_parameters(W = W,
 full_model$optimization_status
 ```
 
-Woohoo, done! The model converges quickly despite the relatively large number of parameters (67). For this analysis we just use the default optimization settings, but you can play around with them and learn more through `?estimate_parameters`
+Woohoo, done! The model converges quickly (<1 second on my 8 y.o. computer) despite the relatively large number of parameters (67). For this analysis we just use the default optimization settings, but you can play around with them and learn more through `?estimate_parameters`
 
 `full_model` is a list that contains a bunch of information. You can what's in there with `full_model %>% names`. Let's dive right in and check out some of the estimates: 
 
@@ -222,9 +241,10 @@ Woohoo, done! The model converges quickly despite the relatively large number of
 full_model$varying %>% as_tibble
 ```
 
-TODO The estimated $\beta$ coefficients describe multiplicative detection biases relative to the reference taxon and protocol. Values larger than one indicate over-detection relative to the reference, while values below one indicate under-detection. 
+Let's visually compare the sequencing protocols with respect to flow cytometry. We have to be a bit careful here to think about our parametrization: remember that $\text{exp}(\beta_{1j})$, $\text{exp}(\beta_{1j} + \beta_{2j})$, and $\text{exp}(\beta_{1j} + \beta_{3j})$ give the degree of over- or under-detection of taxon $j$ relative to taxon 10 under protocols H, Q, and W, respectively, using flow cytometry as the reference protocol. That is, to compare to flow cytometry, we want to look at $\beta_{1j} + \beta_{2j}$, not just $\beta_{2j}$. Let's set that up: 
 
-```{r}
+
+```{r fig-fullwidth, fig.width=7, fig.height=4, out.width="100%", fig.align="center"}
 the_settings <- X %>% as_tibble %>% dplyr::distinct()
 fitted_detectabilities <- (X %*% full_model$B) %>% as_tibble %>% dplyr::distinct()
 colnames(fitted_detectabilities) <- colnames(W)
@@ -237,21 +257,19 @@ the_betahats <- the_settings %>%
   select(-intercept, -qq, -ww) %>% 
   pivot_longer(-setting)
 the_betahats
-```
-
-```{r}
 the_betahats %>% 
   ggplot(aes(x = name, y = value, color = setting)) +
   geom_point() +
-  # geom_hline(yintercept = 1, linetype = "dashed") +
   labs(
-    y = "Estimated detection efficiency",
+    y = "Estimated log-detection efficiency\n(relative to Y. pseudotuberculosis)",
     x = "",
-    # title = "Estimated detection efficiencies by protocol"
   ) + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
+
+# Testing the hypothesis of equal detectability
 
 Testing whether detection efficiencies are identical across protocols H, Q, and W corresponds to the hypothesis $\beta_{Q,j} = \beta_{W,j} = 0$ for all $j = 1, \ldots, J-1$. In other words, protocols Q and W don't differ from protocol H in their detectabilities, where the detectabilities are relative to flow cytometry.
 

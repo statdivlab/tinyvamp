@@ -1,10 +1,10 @@
 pandoc: 3.6.3
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   compare-experiments: compare-experiments.html
   dilution-series: dilution-series.html
-last_built: 2026-03-07T18:31Z
+last_built: 2026-03-08T22:17Z
 urls:
   reference: https://statdivlab.github.io/tinyvamp/reference
   article: https://statdivlab.github.io/tinyvamp/articles
