@@ -2,14 +2,43 @@
 
 ## Scope and purpose
 
-TODO state model we want
-
 In this vignette, we will walk through how to use `tinyvamp` to estimate
 detection efficiencies and contamination using dilution series.
 
-## Comparing detection efficiencies across experiments
+For this analysis, we are going to consider a single mock community that
+was sequenced 9 times at different dilutions. The composition of the
+mock community is known to be 8 taxa at 12.5% relative abundance each.
+248 taxa were detected, however – the remaining 240 were contaminants.
 
-### Setup
+Specifically, we will fit the following model: $$\begin{array}{r}
+{{{\text{expected counts for taxon}\mspace{6mu}}j{\mspace{6mu}\text{in sample}\mspace{6mu}}i} = e^{\gamma_{i}}\left( p_{ij}e^{\beta_{j}} + {\widetilde{p}}_{j}e^{{\widetilde{\gamma}}_{1}}3^{d_{i}} \right)}
+\end{array}$$
+
+where
+
+- $p_{ij}$ is the known composition of the mock community
+- $\gamma_{i}$ reflects how deeply sequenced sample $i$ was
+- $\beta_{j}$ is the detectability of taxon $j$, relative to the
+  reference taxon *L. fermentum*. (we need to set one element equal to
+  zero for identifiability, and we arbitrarily chose *L. fermentum*).
+  Because detectabilities are not identifiable for contaminant taxa, we
+  fix them to be zero for these taxa.
+- ${\widetilde{p}}_{j}$ is the unknown composition of the contaminants.
+  The contamination profile affects all samples, but to differing
+  degrees.
+- $d_{i} = 0,1,\ldots,8$ is the number of 3-fold dilutions undertaken by
+  sample $i$.
+- ${\widetilde{\gamma}}_{1}$ reflects the contamination intensity for
+  the undiluted sample. Notice how the contribution of
+  ${\widetilde{p}}_{j}$ is proportional to
+  $e^{{\widetilde{\gamma}}_{1}}3^{d_{i}}$. That is, greater and greater
+  contribution for more dilute samples.
+
+This model reflects the assumption that the ratio of expected
+contaminant reads to expected non-contaminant reads is proportional to
+$3^{d_{i}}$, as we saw empirically.
+
+## Setup
 
 We will start by loading the relevant packages. We recommend using
 `speedyseq` instead of `phyloseq`. It’s awesome, and you can get it with
@@ -17,19 +46,7 @@ We will start by loading the relevant packages. We recommend using
 
 ``` r
 library(tidyverse)
-#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#> ✔ dplyr     1.2.0     ✔ readr     2.2.0
-#> ✔ forcats   1.0.1     ✔ stringr   1.6.0
-#> ✔ ggplot2   4.0.2     ✔ tibble    3.3.1
-#> ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
-#> ✔ purrr     1.2.1     
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(tinyvamp)
-#> Loading required package: cir
-#> Loading required package: parallel
 library(phyloseq) 
 # library(speedyseq)
 ```
@@ -41,9 +58,8 @@ who generated 9 samples via three-fold dilutions of a synthetic
 community containing 8 distinct strains of bacteria which each account
 for 12.5% of the DNA in the community. Despite only 8 strains being
 present in the synthetic community, 248 total strains were identified
-using DADA2 (see Section 12.1 of [our
-paper](https://arxiv.org/pdf/2204.12733.pdf) for details on data
-processing).
+using DADA2 (see [our paper](https://arxiv.org/pdf/2204.12733.pdf) for
+details on data processing).
 
 ``` r
 data("karstens_phyloseq")
@@ -416,8 +432,7 @@ taxon in the mock community.
 
 Aside: The estimated values in this table are pretty similar to those
 from our paper, with differences being due to different subsets of the
-data being used for fitting. Here we used all nine samples, whereas for
-Table 2 we only used two samples.
+data being used for fitting. Here we used all nine samples.
 
 You can look at which other parameters were estimated as follows:
 
@@ -478,7 +493,7 @@ GitHub issue (preferred), or via email.
 
 Happy estimating and experiment-designing!
 
-### References
+## References
 
 - Karstens, L., Asquith, M., Davin, S. et al. Controlling for
   Contaminants in Low-Biomass 16S rRNA Gene Sequencing Experiments.

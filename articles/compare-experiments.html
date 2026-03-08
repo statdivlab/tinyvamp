@@ -70,18 +70,59 @@ and David S Clausen</h4>
 <div class="section level2">
 <h2 id="scope-and-purpose">Scope and purpose<a class="anchor" aria-label="anchor" href="#scope-and-purpose"></a>
 </h2>
-<p>TODO clarify model and interpretation of beta</p>
 <p>In this vignette, we will walk through how to use
 <code>tinyvamp</code> to estimate and compare detection efficiencies
 across batches or experiments. We will consider the Phase 2 data of
-Costea et al. (2017), who spiked-in a synthetic community to 10 samples,
-which were then sequenced using three shotgun metagenomic sequencing
-experimental protocols (protocols H, Q and W). Taxon abundances were
-also estimated using flow cytometry.</p>
-<p>Our analysis here will estimate the detection efficiencies of the
-three shotgun protocols compared to flow cytometry. We will also test
-the null hypothesis that detection efficiencies of the three shotgun
-protocols are the same.</p>
+Costea et al. (2017), who spiked-in a 10-member synthetic community to
+10 samples, which were then sequenced using three shotgun metagenomic
+sequencing experimental protocols (protocols H, Q and W). Abundances
+were also measured using flow cytometry.</p>
+<p>Specifically, we will demonstrate how to fit the following model:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mrow><mrow><mtext mathvariant="normal">expected counts for taxon </mtext><mspace width="0.333em"></mspace></mrow><mi>j</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> in sample </mtext><mspace width="0.333em"></mspace></mrow><mi>i</mi></mrow><mo>=</mo><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msup><mi>e</mi><mrow><msub><mi>γ</mi><mi>i</mi></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from sequencing</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method Q</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>3</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method W</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub></mrow></msup></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}</annotation></semantics></math> where</p>
+<ul>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">p_{i j}</annotation></semantics></math>
+is the unknown relative abundance of taxon
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+in sample
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>.
+We constrain
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐩</mi><mi>i</mi></msub><mo>=</mo><mi>𝐩</mi><mo>∈</mo><msup><mi>𝕊</mi><mrow><mn>10</mn><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathbf{p}_i = \mathbf{p}\in \mathbb{S}^{10 - 1}</annotation></semantics></math>
+for all
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>,
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐩</mi><annotation encoding="application/x-tex">\mathbf{p}</annotation></semantics></math>
+is the composition of the 10-taxa synthetic community spiked into all
+samples.</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>
+reflects differential detection between the four measurement approaches.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝛃</mi><mo>∈</mo><msup><mi>ℝ</mi><mrow><mn>3</mn><mo>×</mo><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta} \in \mathbb{R}^{3\times10}</annotation></semantics></math>
+are unknown, with the exception of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝛃</mi><mrow><mo>⋅</mo><mn>10</mn></mrow></msub><mo>=</mo><msub><mn>𝟎</mn><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}_{\cdot 10} = \mathbf{0}_3</annotation></semantics></math>
+for identifiability. Under this model,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j})</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j} + \beta_{2j})</annotation></semantics></math>,
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>3</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j} + \beta_{3j})</annotation></semantics></math>
+give the degree of over- or under-detection of taxon
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+relative to taxon 10 under protocols H, Q, and W, respectively, using
+flow cytometry as the reference protocol.</li>
+</ul>
+<p>In addition to estimating
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐩</mi><annotation encoding="application/x-tex">\mathbf{p}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>,
+we will also test the null hypothesis that detection efficiencies of the
+three shotgun protocols are the same
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mn>0</mn></msub><mo>:</mo><msub><mi>β</mi><mrow><mi>q</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">H_0: \beta_{qj} = 0</annotation></semantics></math>
+for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mn>2</mn><mo>,</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">q  = 2, 3</annotation></semantics></math>
+and all
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>).</p>
 <p>Because of its flexibility, fitting a model using
 <code>tinyvamp</code> involves specifying a lot of parameters. The focus
 of this vignette will therefore be on <em>how</em> we set up the model
@@ -209,12 +250,16 @@ across datasets):</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ERR1971011    Q       </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 20 more rows</span></span></span></code></pre></div>
 <p>There are lots of different ways we could set up our comparisons
-between protocols. For example, we could estimate detection efficiencies
-with respect to the flow cytometry measurements. That is, we could
-estimate detection effects for protocol H vs flow cytometry; protocol Q
-vs flow cytometry; protocol W vs flow cytometry (of course, we would get
-a different estimate of the detection effects for each taxon). Here’s
-how we could create that matrix:</p>
+between protocols. For example, we <em>could</em> estimate detection
+efficiencies with respect to the flow cytometry measurements. That is,
+we could estimate detection effects for protocol H vs flow cytometry;
+protocol Q vs flow cytometry; protocol W vs flow cytometry (of course,
+we would get a different estimate of the detection effects for each
+taxon). That would correspond to this model:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mrow><mrow><mtext mathvariant="normal">expected counts for taxon </mtext><mspace width="0.333em"></mspace></mrow><mi>j</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> in sample </mtext><mspace width="0.333em"></mspace></mrow><mi>i</mi></mrow><mo>=</mo><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msup><mi>e</mi><mrow><msub><mi>γ</mi><mi>i</mi></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method H</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method Q</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>3</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method W</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub></mrow></msup></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from seq. method H}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}</annotation></semantics></math></p>
+<p>Here’s how we would create that matrix:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">protocol_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>hh <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">Protocol</span> <span class="op">==</span> <span class="st">"H"</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Protocol</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>,</span>
@@ -230,10 +275,12 @@ estimate the model slightly differently: we’re going to create a
 variable. The intercept variable equals 1 for all sequencing protocols,
 and the Q variable equals 1 for only samples sequenced with the protocol
 Q and zero for all other samples. You could also think of the intercept
-as an indicator for “this sample was sequenced”. We’re going to take
-those three variables as our
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>
-matrix.</p>
+as an indicator for “this sample was sequenced”. This is exactly the
+model we described at the beginning of this vignette:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mrow><mrow><mtext mathvariant="normal">expected counts for taxon </mtext><mspace width="0.333em"></mspace></mrow><mi>j</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> in sample </mtext><mspace width="0.333em"></mspace></mrow><mi>i</mi></mrow><mo>=</mo><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msup><mi>e</mi><mrow><msub><mi>γ</mi><mi>i</mi></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from sequencing</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method Q</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>3</mn><mi>j</mi></mrow></msub><msub><mn>𝟏</mn><mrow><mo stretchy="false" form="prefix">{</mo><mrow><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> from seq. method W</mtext></mrow></mrow><mo stretchy="false" form="postfix">}</mo></mrow></msub></mrow></msup></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} = p_{ij} e^{\gamma_i + \beta_{1j} \mathbf{1}_{\{\text{$i$ from sequencing}\}} +  \beta_{2j} \mathbf{1}_{\{\text{$i$ from seq. method Q}\}}  +  \beta_{3j} \mathbf{1}_{\{\text{$i$ from seq. method W}\}} }
+  \end{align}</annotation></semantics></math></p>
+<p>Here’s how we create that matrix:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">protocol_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Protocol</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>,</span>
@@ -250,11 +297,11 @@ on!)</p>
 <p>Since
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>
 and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\mathbf{\beta}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>
 go together in the model, lets also initialize our estimate of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\mathbf{\beta}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>,
 and tell the model what we know about
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\mathbf{\beta}</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>.
 Let initialize the estimation algorithm at “all taxa have the same
 detection efficiencies under all protocols”:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -263,7 +310,7 @@ detection efficiencies under all protocols”:</p>
 <p>(Remember that there are 10 taxa and 3 protocol variables: Intercept,
 Protocol Q and Protocol W)</p>
 <p>What do we know about
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\mathbf{\beta}</annotation></semantics></math>?
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>?
 Nothing, right? Well, almost. We always need to choose which taxon we’re
 comparing our efficiencies against. Let’s choose the last taxon,
 <em>Yersinia pseudotuberculosis</em>.</p>
@@ -343,7 +390,7 @@ like so:</p>
 <span><span class="va">X_tilde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, ncol <span class="op">=</span> <span class="fl">3</span>, nrow<span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="fit-full-and-null-models">Fit full and null models<a class="anchor" aria-label="anchor" href="#fit-full-and-null-models"></a>
+<h2 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h2>
 <p>Woohoo! It’s time to fit the model.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -367,10 +414,11 @@ like so:</p>
 <span>                                  Z_tilde_list <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="va">full_model</span><span class="op">$</span><span class="va">optimization_status</span></span>
 <span><span class="co">#&gt; [1] "Converged"</span></span></code></pre></div>
-<p>Woohoo, done! The model converges quickly despite the relatively
-large number of parameters (67). For this analysis we just use the
-default optimization settings, but you can play around with them and
-learn more through <code><a href="../reference/estimate_parameters.html">?estimate_parameters</a></code></p>
+<p>Woohoo, done! The model converges quickly (&lt;1 second on my 8 y.o.
+computer) despite the relatively large number of parameters (67). For
+this analysis we just use the default optimization settings, but you can
+play around with them and learn more through
+<code><a href="../reference/estimate_parameters.html">?estimate_parameters</a></code></p>
 <p><code>full_model</code> is a list that contains a bunch of
 information. You can what’s in there with
 <code>full_model %&gt;% names</code>. Let’s dive right in and check out
@@ -391,12 +439,22 @@ some of the estimates:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 0.077<span style="text-decoration: underline;">3</span> P         1     9</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 0.099<span style="text-decoration: underline;">2</span> P         1    10</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 57 more rows</span></span></span></code></pre></div>
-<p>TODO The estimated
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
-coefficients describe multiplicative detection biases relative to the
-reference taxon and protocol. Values larger than one indicate
-over-detection relative to the reference, while values below one
-indicate under-detection.</p>
+<p>Let’s visually compare the sequencing protocols with respect to flow
+cytometry. We have to be a bit careful here to think about our
+parametrization: remember that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j})</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j} + \beta_{2j})</annotation></semantics></math>,
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">exp</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>3</mn><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{exp}(\beta_{1j} + \beta_{3j})</annotation></semantics></math>
+give the degree of over- or under-detection of taxon
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+relative to taxon 10 under protocols H, Q, and W, respectively, using
+flow cytometry as the reference protocol. That is, to compare to flow
+cytometry, we want to look at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mn>1</mn><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\beta_{1j} + \beta_{2j}</annotation></semantics></math>,
+not just
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>β</mi><mrow><mn>2</mn><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\beta_{2j}</annotation></semantics></math>.
+Let’s set that up:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">the_settings</span> <span class="op">&lt;-</span> <span class="va">X</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">as_tibble</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">fitted_detectabilities</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">full_model</span><span class="op">$</span><span class="va">B</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">as_tibble</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -429,20 +487,21 @@ indicate under-detection.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Flow cytometry Salmonella_enterica             0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Flow cytometry Vibrio_cholerae                 0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Flow cytometry Yersinia_pseudotuberculosis     0</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">the_betahats</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 30 more rows</span></span></span>
+<span><span class="va">the_betahats</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">name</span>, y <span class="op">=</span> <span class="va">value</span>, color <span class="op">=</span> <span class="va">setting</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># geom_hline(yintercept = 1, linetype = "dashed") +</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    y <span class="op">=</span> <span class="st">"Estimated detection efficiency"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Estimated log-detection efficiency\n(relative to Y. pseudotuberculosis)"</span>,</span>
 <span>    x <span class="op">=</span> <span class="st">""</span>,</span>
-<span>    <span class="co"># title = "Estimated detection efficiencies by protocol"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, vjust <span class="op">=</span> <span class="fl">1</span>, hjust<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="compare-experiments_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="compare-experiments_files/figure-html/fig-fullwidth-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
+</div>
+<div class="section level2">
+<h2 id="testing-the-hypothesis-of-equal-detectability">Testing the hypothesis of equal detectability<a class="anchor" aria-label="anchor" href="#testing-the-hypothesis-of-equal-detectability"></a>
+</h2>
 <p>Testing whether detection efficiencies are identical across protocols
 H, Q, and W corresponds to the hypothesis
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mi>Q</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>=</mo><msub><mi>β</mi><mrow><mi>W</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta_{Q,j} = \beta_{W,j} = 0</annotation></semantics></math>
@@ -453,7 +512,7 @@ detectabilities, where the detectabilities are relative to flow
 cytometry.</p>
 <p>To test this hypothesis, we need to tell tinyvamp what the null
 hypothesis is. We do this as follows:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### Create null model specification for test</span></span>
 <span><span class="va">null_param</span> <span class="op">&lt;-</span> <span class="va">full_model</span></span>
 <span><span class="co">### set second and third rows of B equal to zero</span></span>
@@ -469,7 +528,7 @@ less than 35 seconds on my 1.4 GHz Dual-Core Intel Core i7 from 2017.
 So, on a more modern machine using parallelization, even 100 iterations
 should take even less than a minute. Take this minute to stretch your
 neck and hands, or look at a photo of your favourite cat.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bootstrap_test</span> <span class="op">&lt;-</span>  </span>
 <span>  <span class="fu"><a href="../reference/bootstrap_lrt.html">bootstrap_lrt</a></span><span class="op">(</span>W <span class="op">=</span> <span class="va">W</span>,</span>
 <span>                fitted_model<span class="op">=</span> <span class="va">full_model</span>,</span>

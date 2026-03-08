@@ -69,36 +69,68 @@
 <div class="section level2">
 <h2 id="scope-and-purpose">Scope and purpose<a class="anchor" aria-label="anchor" href="#scope-and-purpose"></a>
 </h2>
-<p>TODO state model we want</p>
 <p>In this vignette, we will walk through how to use
 <code>tinyvamp</code> to estimate detection efficiencies and
 contamination using dilution series.</p>
+<p>For this analysis, we are going to consider a single mock community
+that was sequenced 9 times at different dilutions. The composition of
+the mock community is known to be 8 taxa at 12.5% relative abundance
+each. 248 taxa were detected, however – the remaining 240 were
+contaminants.</p>
+<p>Specifically, we will fit the following model:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mrow><mrow><mtext mathvariant="normal">expected counts for taxon </mtext><mspace width="0.333em"></mspace></mrow><mi>j</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> in sample </mtext><mspace width="0.333em"></mspace></mrow><mi>i</mi></mrow><mo>=</mo><msup><mi>e</mi><msub><mi>γ</mi><mi>i</mi></msub></msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msup><mi>e</mi><msub><mi>β</mi><mi>j</mi></msub></msup><mo>+</mo><msub><mover><mi>p</mi><mo accent="true">̃</mo></mover><mi>j</mi></msub><msup><mi>e</mi><msub><mover><mi>γ</mi><mo accent="true">̃</mo></mover><mn>1</mn></msub></msup><msup><mn>3</mn><msub><mi>d</mi><mi>i</mi></msub></msup><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align}
+  \text{expected counts for taxon $j$ in sample $i$} =  e^{\gamma_i} \left( p_{i j}e^{\beta_j} + \tilde{p}_j e^{\tilde{\gamma}_1 }3^{d_i} \right)
+\end{align}</annotation></semantics></math></p>
+<p>where</p>
+<ul>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>p</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">p_{ij}</annotation></semantics></math>
+is the known composition of the mock community</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>γ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\gamma_i</annotation></semantics></math>
+reflects how deeply sequenced sample
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+was</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>β</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\beta_j</annotation></semantics></math>
+is the detectability of taxon
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+relative to the reference taxon <em>L. fermentum</em>. (we need to set
+one element equal to zero for identifiability, and we arbitrarily chose
+<em>L. fermentum</em>). Because detectabilities are not identifiable for
+contaminant taxa, we fix them to be zero for these taxa.</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>p</mi><mo accent="true">̃</mo></mover><mi>j</mi></msub><annotation encoding="application/x-tex">\tilde{p}_j</annotation></semantics></math>
+is the unknown composition of the contaminants. The contamination
+profile affects all samples, but to differing degrees.</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>i</mi></msub><mo>=</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">d_i = 0, 1, \ldots, 8</annotation></semantics></math>
+is the number of 3-fold dilutions undertaken by sample
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>.</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>γ</mi><mo accent="true">̃</mo></mover><mn>1</mn></msub><annotation encoding="application/x-tex">\tilde{\gamma}_1</annotation></semantics></math>
+reflects the contamination intensity for the undiluted sample. Notice
+how the contribution of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>p</mi><mo accent="true">̃</mo></mover><mi>j</mi></msub><annotation encoding="application/x-tex">\tilde{p}_j</annotation></semantics></math>
+is proportional to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><msub><mover><mi>γ</mi><mo accent="true">̃</mo></mover><mn>1</mn></msub></msup><msup><mn>3</mn><msub><mi>d</mi><mi>i</mi></msub></msup></mrow><annotation encoding="application/x-tex">e^{\tilde{\gamma}_1 }3^{d_i}</annotation></semantics></math>.
+That is, greater and greater contribution for more dilute samples.</li>
+</ul>
+<p>This model reflects the assumption that the ratio of expected
+contaminant reads to expected non-contaminant reads is proportional to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>3</mn><msub><mi>d</mi><mi>i</mi></msub></msup><annotation encoding="application/x-tex">3^{d_i}</annotation></semantics></math>,
+as we saw empirically.</p>
 </div>
 <div class="section level2">
-<h2 id="comparing-detection-efficiencies-across-experiments">Comparing detection efficiencies across experiments<a class="anchor" aria-label="anchor" href="#comparing-detection-efficiencies-across-experiments"></a>
+<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
-<div class="section level3">
-<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
-</h3>
 <p>We will start by loading the relevant packages. We recommend using
 <code>speedyseq</code> instead of <code>phyloseq</code>. It’s awesome,
 and you can get it with
 <code>remotes::install_github("mikemc/speedyseq")</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Attaching core tidyverse packages</span> ──────────────────────── tidyverse 2.0.0 ──</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">dplyr    </span> 1.2.0     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">readr    </span> 2.2.0</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">forcats  </span> 1.0.1     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">stringr  </span> 1.6.0</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">ggplot2  </span> 4.0.2     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tibble   </span> 3.3.1</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">lubridate</span> 1.9.5     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tidyr    </span> 1.3.2</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">purrr    </span> 1.2.1     </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Conflicts</span> ────────────────────────────────────────── tidyverse_conflicts() ──</span></span>
-<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">filter()</span> masks <span style="color: #0000BB;">stats</span>::filter()</span></span>
-<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">lag()</span>    masks <span style="color: #0000BB;">stats</span>::lag()</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Use the conflicted package (<span style="color: #0000BB; font-style: italic;">&lt;http://conflicted.r-lib.org/&gt;</span>) to force all conflicts to become errors</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/statdivlab/tinyvamp" class="external-link">tinyvamp</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: cir</span></span>
-<span><span class="co">#&gt; Loading required package: parallel</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://dx.plos.org/10.1371/journal.pone.0061217" class="external-link">phyloseq</a></span><span class="op">)</span> </span>
 <span><span class="co"># library(speedyseq)</span></span></code></pre></div>
 <p>Now let’s load the relevant data and inspect it. This data is from <a href="https://journals.asm.org/doi/full/10.1128/mSystems.00290-19?rfr_dat=cr_pub++0pubmed&amp;url_ver=Z39.88-2003&amp;rfr_id=ori%3Arid%3Acrossref.org" class="external-link">Karstens
@@ -106,7 +138,7 @@ et al. (2019)</a>, who generated 9 samples via three-fold dilutions of a
 synthetic community containing 8 distinct strains of bacteria which each
 account for 12.5% of the DNA in the community. Despite only 8 strains
 being present in the synthetic community, 248 total strains were
-identified using DADA2 (see Section 12.1 of <a href="https://arxiv.org/pdf/2204.12733.pdf" class="external-link">our paper</a> for details on
+identified using DADA2 (see <a href="https://arxiv.org/pdf/2204.12733.pdf" class="external-link">our paper</a> for details on
 data processing).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"karstens_phyloseq"</span><span class="op">)</span></span>
@@ -166,7 +198,6 @@ lives easier later!</p>
 <span><span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span> , <span class="op">!</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">jj</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">mock_taxa</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>           <span class="va">W</span><span class="op">[</span> , <span class="va">mock_taxa</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">W</span> <span class="op">&lt;-</span> <span class="va">W</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span><span class="op">)</span>, <span class="op">]</span></span></code></pre></div>
-</div>
 </div>
 <div class="section level2">
 <h2 id="model-assumptions-and-data">Model assumptions and data<a class="anchor" aria-label="anchor" href="#model-assumptions-and-data"></a>
@@ -441,8 +472,7 @@ were negative, this tells us that <em>L. fermentum</em> is the most
 easily detected taxon in the mock community.</p>
 <p>Aside: The estimated values in this table are pretty similar to those
 from our paper, with differences being due to different subsets of the
-data being used for fitting. Here we used all nine samples, whereas for
-Table 2 we only used two samples.</p>
+data being used for fitting. Here we used all nine samples.</p>
 <p>You can look at which other parameters were estimated as follows:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">full_karstens_model</span><span class="op">$</span><span class="va">varying</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">param</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">unique</span></span>
@@ -492,9 +522,10 @@ me (Amy) know if you have any questions or would like further
 clarification. You can do this via a GitHub issue (preferred), or via
 email.</p>
 <p>Happy estimating and experiment-designing!</p>
-<div class="section level3">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <ul>
 <li>Karstens, L., Asquith, M., Davin, S. et al. Controlling for
 Contaminants in Low-Biomass 16S rRNA Gene Sequencing Experiments.
@@ -503,7 +534,6 @@ Contaminants in Low-Biomass 16S rRNA Gene Sequencing Experiments.
 <li>Clausen, D.S. and Willis, A.D. Modeling complex measurement error in
 microbiome experiments. <em>arxiv</em> 2204.12733. <a href="https://arxiv.org/abs/2204.12733" class="external-link uri">https://arxiv.org/abs/2204.12733</a>.</li>
 </ul>
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
