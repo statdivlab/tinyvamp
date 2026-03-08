@@ -13,7 +13,7 @@ jobs:
     runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     steps:
       - uses: actions/checkout@v3
 
@@ -23,7 +23,7 @@ jobs:
 
       - name: Query dependencies
         run: |
-          install.packages('remotes')
+          install.packages("remotes")
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
@@ -37,13 +37,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("remotes"))
+          install.packages("remotes")
           if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
           BiocManager::install("phyloseq", ask = FALSE)
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
+          install.packages("xml2")
         shell: Rscript {0}
 
-      - name: Test coverage
-        run: covr::codecov()
+      - name: Build coverage report
+        run: |
+          cov <- covr::package_coverage()
+          print(cov)
+          covr::to_cobertura(cov, filename = "coverage.xml")
         shell: Rscript {0}
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN_tinyvamp }}
+          files: coverage.xml
+          slug: statdivlab/tinyvamp
+          fail_ci_if_error: true
