@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   compare-experiments: compare-experiments.html
   dilution-series: dilution-series.html
-last_built: 2026-03-08T22:21Z
+last_built: 2026-03-08T22:35Z
 urls:
   reference: https://statdivlab.github.io/tinyvamp/reference
   article: https://statdivlab.github.io/tinyvamp/articles
